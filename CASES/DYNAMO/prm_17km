@@ -1,0 +1,98 @@
+&SGS_TKE
+dosmagor = .true.
+/
+
+&MICRO_SAM1MOM
+doKKauto = .true.
+doKKaccr = .true.
+/
+
+&PARAMETERS
+
+caseid ='144x144x74_17km_15s_dampw0.6',
+
+day0=274.,
+
+nrestart = 0,
+
+!docolumn = .true.
+!docup = .true.
+!n_cup = 30
+
+OCEAN = .true.,
+doseawater = .true.,
+
+
+
+dx = 	17000.,
+dy = 	17000.,
+dt = 	15.,
+
+nstop 	= 518400, 
+nprint 	= 180,
+nstat 	= 5760,
+nstatfrq= 64,
+
+!nstop 	= 777600, ! 10s
+!nprint 	= 180,
+!nstat 	= 8640,
+!nstatfrq= 96,
+
+dodamping_w = .true.,
+damping_w_cu = 0.6,
+!dodamping_u = .true.,
+damping_u_cu = 0.25
+
+
+dosgs		= .true.,
+dodamping 	= .true.,
+doupperbound  	= .true.,
+docloud 	= .true.,
+doprecip 	= .true., 
+dolongwave	= .true.,
+doshortwave	= .true.,
+dosurface 	= .true.,
+dolargescale 	= .true.,
+doradforcing    = .false.,
+dosfcforcing    = .true.,
+docoriolis 	= .false.,
+donudging_uv    = .true.,
+donudging_tq    = .false.,
+
+!doisccp = .true.,
+!domodis = .true.,
+!domisr = .true.,
+
+tauls = 7200.,
+
+SFC_FLX_FXD    = .false.,
+SFC_TAU_FXD    = .false.,
+
+longitude0 = 76.5,
+latitude0 = 3.,
+
+nrad = 60,
+!nrad = 90,
+
+doseasons = .true.,
+
+doSAMconditionals = .false.
+dosatupdnconditionals = .false.
+
+
+nsave2D	= 4320,
+!nsave2D	= 99999080,
+nsave2Dstart	= 99999999, 
+nsave2Dend	= 999164000,
+save2Davg = .false.
+save2Dsep = .true.
+
+nsave3D	= 1080,
+nsave3Dstart	= 99999990,
+nsave3Dend	= 999999999,
+save3Dbin      = .false.
+
+/ 
+
+
+

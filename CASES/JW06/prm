@@ -1,0 +1,99 @@
+&PARAMETERS
+
+caseid ='9216x4608x74_10s_1'
+
+earth_factor = 1.
+
+perturb_type = 8,
+
+nrestart = 0,
+
+readlat = .true.
+latlonfile = './GRIDS/lat_4608'
+
+
+!case_restart ='JW06'
+!caseid_restart ='576x288x30_20s_baro_r8_nadv23_0.8_corz_tk0.001'
+
+!nadv_mom = 23
+!alpha_hybrid = 0.8
+
+!dodebug = .true.
+
+gmg_precision = 1.e-6
+
+dt = 10.,
+day0=0.,
+nstop    = 10,
+nelapse  = 10, 
+nprint   = 1,
+nstat    = 10,
+nstatfrq = 1,
+
+doglobal =.true.
+doterrain= .false.
+
+!dx = 156250.
+!dy = 156000.
+
+
+restart_sep = .false.,
+!restart_skip = 9,
+
+
+dofplane = .false.
+docoriolis = .true.,
+!docoriolisz = .true.,
+
+doseasons = .false.,
+
+doradlat = .true.,
+doradlon = .true.,
+nrad = 60,
+
+tabs_s = 300.
+
+OCEAN = .true.,
+
+dosgs           = .false.,
+dodamping       = .false.,
+doupperbound    = .false.,
+docloud         = .false.,
+doprecip        = .false.,
+dolongwave      = .false.,
+doshortwave     = .false.,
+dosurface       = .false.,
+dolargescale    = .false.,
+doradforcing    = .false.,
+dosfcforcing    = .false.,
+donudging_uv    = .false.,
+donudging_tq    = .false.,
+
+tauls = 86400.,
+
+SFC_FLX_FXD    = .false.,
+SFC_TAU_FXD    = .false.,
+
+doisccp = .false.,
+
+doSAMconditionals = .false.
+dosatupdnconditionals = .false.
+
+nsave2D = 30,
+nsave2Dstart    = 0,
+nsave2Dend      = 999999999,
+save2Dsep = .true.
+save2Davg = .false.
+
+nsave3D = 30,
+nsave3Dstart    = 0,
+nsave3Dend      = 999999999,
+save3Dbin      = .false.
+
+nmovie       = 60,
+nmoviestart  = 99999990
+nmovieend    = 99960480
+
+/
+
+

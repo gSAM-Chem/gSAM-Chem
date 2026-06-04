@@ -1,0 +1,78 @@
+&SGS_TKE
+dosmagor = .true.
+/
+
+&MICRO_SAM1MOM
+ icefall_fudge=0.8
+/
+
+&PARAMETERS
+
+caseid ='144x144x72_1km_10s_fudge0.8',
+
+nrestart = 0,
+
+day0=126.25,
+
+nstop 	= 390960,
+nprint 	= 60,
+nstat 	= 2160,
+nstatfrq= 96,
+
+
+dx = 	1000.,
+dy = 	1000.,
+
+dt = 	10.,
+
+OCEAN = .true.,
+doseawater = .true.,
+LES_S = .false.
+
+dosgs		= .true.,
+dodamping 	= .true.,
+doupperbound  	= .true.,
+docloud 	= .true.,
+doprecip 	= .true., 
+dolongwave	= .true.,
+doshortwave	= .true.,
+dosurface 	= .true.,
+dolargescale 	= .true.,
+doradforcing   = .false.,
+dosfcforcing   = .true.,
+docoriolis 	= .false.,
+donudging_uv   = .true.,
+donudging_tq   = .false.,
+
+tauls = 7200.,
+
+SFC_FLX_FXD    = .false.,
+SFC_TAU_FXD    = .false.,
+
+longitude0 = 167.4,
+latitude0 = 8.6,
+
+nrad = 60,
+
+doseasons = .true.,
+!doisccp = .true.,
+!domodis = .true.,
+!domisr = .true.,
+
+fcor = 0.376e-4,
+
+!doSAMconditionals = .true.
+!dosatupdnconditionals = .true.
+
+nsave2D	= 360,
+nsave2Dstart	= 0, 
+nsave2Dend	= 99916400,
+
+nsave3D	= 360,
+nsave3Dstart	= 0,
+nsave3Dend	= 99999999,
+
+/ 
+
+
+

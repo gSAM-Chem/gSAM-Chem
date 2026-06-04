@@ -1,0 +1,70 @@
+&SGS_TKE
+ dosmagor	= .true.,
+/
+&PARAMETERS
+
+ caseid ='576x288x80_500m_10s_h250',
+
+ nrestart = 0,
+
+ perturb_type = -1, 
+
+ dodamping_w = .false.
+ dowally = .true.
+
+ dodebug = .false.
+
+ CEM = .true.,
+ OCEAN = .true.
+
+ doterrain = .true.,
+ terrain_type = 8, 
+ dobufferzonex = .true.,
+ bufferzonex = 0.2
+
+ nub = 0.5
+
+ dosgs		= .true.,
+ dodamping 	= .true.,
+ doupperbound  	= .false.,
+ docloud 	= .false.,
+ doprecip 	= .false., 
+ dolongwave	= .false.,
+ doshortwave	= .false.,
+ dosurface 	= .false.,
+ dolargescale 	= .false.,
+ doradforcing   = .false.,
+ dosfcforcing   = .false.,
+ docoriolis 	= .false.,
+ donudging_uv   = .false.,
+ donudging_tq   = .false.,
+
+ dx = 	500.,
+ dy = 	500.,
+
+ dt = 	10.,
+ 
+ day0=0.,
+
+nstop 	= 4320,
+!nelapse = 360 
+nprint = 60,
+nstat 	= 360,
+nstatfrq= 1,
+
+doSAMconditionals = .false.
+dosatupdnconditionals = .false.
+
+
+ nsave2D	= 360,
+ nsave2Dstart	= 999999999,
+ nsave2Dend	= 999164000,
+
+ nsave3D	= 30,
+ nsave3Dstart	= 0,
+ nsave3Dend	= 999999999,
+
+/ 
+
+
+

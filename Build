@@ -1,0 +1,174 @@
+#! /bin/csh -f
+
+# specify the scratch directory where object files as well as
+# restart and large output data file will be located :
+
+setenv HOSTNAME hermes
+setenv SAM_SCR .
+
+# ----------------------------------
+# specify (GNU) make utility and number of core used to compile
+
+setenv GNUMAKE 'make -j8'
+
+# ----------------------------------
+# specify scalar-advection directory in SRC
+#setenv ADV_DIR ADV_UM5
+setenv ADV_DIR ADV_MPDATA
+
+# ----------------------------------
+# specify SGS directory in SRC
+setenv SGS_DIR SGS_TKE
+#setenv SGS_DIR SGS_TKE.SAM
+# ----------------------------------
+# specify radiation directory in SRC
+#setenv RAD_DIR RAD_CAM
+setenv RAD_DIR RAD_RRTM
+#setenv RAD_DIR RAD_Dummy
+
+# ----------------------------------
+# specify microphysics directory in SRC
+# setenv MICRO_DIR MICRO_SAM1MOM
+#setenv MICRO_DIR MICRO_SAM1MOM.SAM  # more like standard SAM 
+setenv MICRO_DIR MICRO_M2005
+#setenv MICRO_DIR MICRO_THOM
+#setenv MICRO_DIR MICRO_P3
+#setenv MICRO_DIR MICRO_P3BLAZ  # P3 with some Peter Blossey's Group's mods
+#setenv MICRO_DIR MICRO_DRIZZLE
+#setenv MICRO_DIR MICRO_KH3
+
+# ----------------------------------
+# specify chemistry mechanism
+setenv CHEM_MECH CLOUDCHEM
+setenv HET_CHEM HET_CHEM
+# ----------------------------------
+# make output buffered is such exists on your system
+# it can speed up writing of large files
+# this is usually supported only by ifort (Intel compiler)
+# Otherewise, just comment out the line below
+# or make sure that it has not be defined already
+#setenv BUFFERED_OUT
+
+# use pNetCDF library to write output files directly in NetCDF format
+# you need that library installed on your system and you compiling 
+# and linking flags in Makefile should be properly set.
+# If you don't want such a capability, just comment the line below out.
+#setenv PNETCDF_OUT
+
+#--------------------------------------------
+#--------------------------------------------
+#--------------------------------------------
+#--------------------------------------------
+# Generally, you don't need to edit below this line.
+#--------------------------------------------
+#--------------------------------------------
+#--------------------------------------------
+
+setenv SAM_DIR  `pwd`
+setenv SAM_OBJ  $SAM_SCR/OBJ
+setenv SAM_SRC  `pwd`/SRC
+
+if !(-d $SAM_SCR) mkdir -p $SAM_SCR
+
+set echo
+
+if !(-d $SAM_SCR/OUT_2D) mkdir $SAM_SCR/OUT_2D
+if !(-d $SAM_SCR/OUT_MISC) mkdir $SAM_SCR/OUT_MISC
+if !(-d $SAM_SCR/OUT_2DZ) mkdir $SAM_SCR/OUT_2DZ
+if !(-d $SAM_SCR/OUT_2DL) mkdir $SAM_SCR/OUT_2DL
+if !(-d $SAM_SCR/OUT_3D) mkdir $SAM_SCR/OUT_3D
+if !(-d $SAM_SCR/OUT_MOMENTS) mkdir $SAM_SCR/OUT_MOMENTS
+if !(-d $SAM_SCR/OUT_STAT) mkdir $SAM_SCR/OUT_STAT
+if !(-d $SAM_SCR/OUT_MOVIES) mkdir $SAM_SCR/OUT_MOVIES
+if !(-d $SAM_SCR/OUT_INV) mkdir $SAM_SCR/OUT_INV
+if !(-d $SAM_SCR/RESTART) mkdir $SAM_SCR/RESTART
+if !(-d $SAM_SCR/RESTART1) mkdir $SAM_SCR/RESTART1
+if !(-d $SAM_OBJ) mkdir $SAM_OBJ
+
+if !(-d OUT_2D) ln -s $SAM_SCR/OUT_2D  OUT_2D
+if !(-d OUT_MISC) ln -s $SAM_SCR/OUT_MISC  OUT_MISC
+if !(-d OUT_2DZ) ln -s $SAM_SCR/OUT_2DZ  OUT_2DZ
+if !(-d OUT_2DL) ln -s $SAM_SCR/OUT_2DL  OUT_2DL
+if !(-d OUT_3D) ln -s $SAM_SCR/OUT_3D  OUT_3D
+if !(-d OUT_MOMENTS) ln -s $SAM_SCR/OUT_MOMENTS OUT_MOMENTS
+if !(-d OUT_STAT) ln -s $SAM_SCR/OUT_STAT  OUT_STAT
+if !(-d OUT_MOVIES) ln -s $SAM_SCR/OUT_MOVIES  OUT_MOVIES
+if !(-d OUT_INV) ln -s $SAM_SCR/OUT_INV  OUT_INV
+if !(-d RESTART) ln -s $SAM_SCR/RESTART RESTART
+if !(-d RESTART1) ln -s $SAM_SCR/RESTART1 RESTART1
+if !(-d OBJ) ln -s $SAM_OBJ  OBJ
+
+
+#--------------------------------------------
+#bloss: add "make clean" if MICRO or RAD options
+#        have changed.
+cat > MICRO_RAD_OPTIONS.new <<EOF
+$ADV_DIR
+$SGS_DIR
+$MICRO_DIR
+$RAD_DIR
+EOF
+
+if (-e $SAM_OBJ/MICRO_RAD_OPTIONS) then
+  # use of cmp suggested by http://docs.hp.com/en/B2355-90046/ch14s03.html
+  cmp -s $SAM_OBJ/MICRO_RAD_OPTIONS MICRO_RAD_OPTIONS.new
+  if ($status != 0) then
+    # the file has changed -- remove everything from SAM_OBJ
+    #   so that we get a fresh compile of the model
+    echo "MICRO or RAD option changed in Build.  Removing all object files from OBJ/"
+    rm -f $SAM_OBJ/*
+  endif
+endif
+# move the new options into $SAM_OBJ/MICRO_RAD_OPTIONS
+mv -f MICRO_RAD_OPTIONS.new $SAM_OBJ/MICRO_RAD_OPTIONS
+#--------------------------------------------
+
+if (! $?BUFFERED_OUT) then
+    echo "#define BUFFEREDYES" > $SAM_SRC/fppmacros1
+else
+    echo "#define BUFFEREDYES BUFFERED='YES'," > $SAM_SRC/fppmacros1
+endif
+# Check if PNetCDF library  is defined
+# (to use it, make sure that PNETCDF environmental variable is defined)
+if ($?PNETCDF_OUT) then
+    echo "#define pnetcdf_out" >> $SAM_SRC/fppmacros1
+endif
+cmp -s $SAM_SRC/fppmacros1 $SAM_SRC/fppmacros
+if (! $status == 0) then
+   mv $SAM_SRC/fppmacros1 $SAM_SRC/fppmacros 
+endif
+
+#--------------------------------------------
+cd $SAM_OBJ
+
+#----------------------------------------------------
+# directory tree that the Pirl scripts will traverse 
+# to build dependecies files.
+
+if ( !(-e Filepath) ) then
+cat >! Filepath << EOF
+
+$SAM_SRC
+$SAM_SRC/SLM
+$SAM_SRC/CHEMISTRY/$CHEM_MECH
+$SAM_SRC/CHEMISTRY/$HET_CHEM
+$SAM_SRC/CHEMISTRY
+$SAM_SRC/$ADV_DIR
+$SAM_SRC/$MICRO_DIR
+$SAM_SRC/$SGS_DIR
+$SAM_SRC/$RAD_DIR
+$SAM_SRC/$MICRO_DIR
+$SAM_SRC/SIMULATORS
+$SAM_SRC/BUILDINGS_Dummy
+$SAM_SRC/CUP
+#$SAM_SRC/OCEAN
+$SAM_SRC/OCEAN_Dummy
+$SAM_SRC/GMG
+
+EOF
+endif
+
+$GNUMAKE -f $SAM_DIR/Makefile
+
+
+

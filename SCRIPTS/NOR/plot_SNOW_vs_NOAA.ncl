@@ -1,0 +1,122 @@
+files = systemfunc("ls -1 ../../OUT_2D/NOR_1536x1536x72_2.5km_10s_JAN3_SNOW_NUDGEUV12_NEWNUDGE_2018*.2D_atm.nc")
+nfiles = dimsizes(files)
+
+dt = 1./24.  ; time step between data sample in days
+
+g = addfile("/glade/work/marat/SNOW_NOAA/sfav2_CONUS_48h_2018010512.nc","r")
+nstart = 23 
+nend = 24*2+nstart 
+
+
+wks = gsn_open_wks("ps","ps")
+
+f=addfiles(files,"r")
+
+lat = f[0]->lat
+lon = f[0]->lon
+print("lon: "+min(lon)+" "+max(lon))
+print("lat: "+min(lat)+" "+max(lat))
+
+res = True
+res@cnFillOn              = True
+res@cnLinesOn             = False
+res@cnLineLabelsOn = False                    ; turn the line labels off
+res@cnFillMode            = "RasterFill"
+
+;lonmin = min(lon)
+;lonmax = max(lon)
+;latmin = min(lat)
+;latmax = max(lat)
+
+lonmin = -88. + 360.
+lonmax = -65. + 360.
+latmin = 30.
+latmax = 48.
+
+res@gsnAddCyclic          = False
+res@mpLimitMode            = "LatLon"
+res@mpMinLatF              = latmin
+res@mpMaxLatF              = latmax
+res@mpMinLonF              = lonmin
+res@mpMaxLonF              = lonmax
+
+res@gsnDraw             = False           ; don't draw
+res@gsnFrame            = False           ; don't advance frame
+res@lbLabelBarOn        = False           ; turn off individual cb's
+
+;************************************************
+  resP                                  = True                    ; modify the panel plot
+  resP@gsnPanelLabelBar                 = True                    ; add common colorbar
+;  resP@gsnPanelFigureStrings            = (/"gSAM","ERA5"/)           ; add strings to panel
+  resP@gsnPanelFigureStringsFontHeightF = 0.015                   
+  resP@gsnMaximize = True 
+
+  plot    = new(2,graphic)  
+
+  res@cnLevelSelectionMode =  "ManualLevels"   
+  res@cnMinLevelValF       = 0.
+  res@cnMaxLevelValF       = 50.
+  res@cnLevelSpacingF      = 1. 
+
+  resP@gsnPanelMainString  = "LWE Accumulated Snow, mm"
+
+  res@mpOutlineBoundarySets = "AllBoundaries"
+  res@mpDataBaseVersion     = "MediumRes"   ; necessary for mpDataSetName to be effective
+  res@mpDataSetName = "Earth..1"
+
+  colors = (/ (/255,255,255/), (/232,239,244/), \
+              (/196,214,228/), (/132,173,209/), (/82,132,181/), \
+              (/41,87,150/), (/19,54,139/), (/253,248,165/), \
+              (/241,196,83/), (/230,144,70/), (/189,74,48/), \
+              (/134,52,39/), (/89,29,19/), (/35,13,48/), (/65,38,114/)/) /255.
+  res@cnLevelSelectionMode = "ExplicitLevels"   ; set explicit contour levels
+  res@cnLevels             = (/0.1,1.,2.,3.,4.,6.,8.,12.,18.,24.,30.,36.,48./)
+;  res@cnFillPalette        = colors
+  res@cnFillPalette        = "WhViBlGrYeOrRe"
+
+; first obtain the conversion from LWE Snow to Snow Depth using NOAA climotology:
+
+fconv = addfile("/glade/work/marat/SNOW_NOAA/GHCND_SLR_clim_CONUS_January_1990_to_2019_450_arc_sec.nc","r")
+conv = fconv->Data
+
+; fill missing values:
+
+poisson_grid_fill( conv, False, 0, 5000, 0.001, 0.6, 0)
+
+; interpolate to model grid:
+
+lon1 = lon - 360.
+conv1 = linint2(conv&lon,conv&lat,conv,False,lon1,lat,0)
+print("conv: "+min(conv1)+"  "+max(conv1))
+
+do i=nstart,nend
+  tmp = f[i]->TSFC(0,:,:)
+  land = f[i]->LAND(0,:,:)
+  fld = f[i]->Preca(0,:,:)
+  if(i.eq.nstart) then
+   fldac = fld
+   fldac = 0.
+  end if
+;  fld = where(land.ne.0.,fld,0.)
+  fld = where(tmp.lt.277..and.land.ne.0.,fld,0.)
+  fldac = fldac + fld 
+  print(i+"  fldac="+min(fldac)+"  "+max(fldac))
+end do
+coef = dt * conv1/25.4
+fldac = fldac * coef
+print("  fldac="+min(fldac)+"  "+max(fldac))
+fldac@long_name = "gSAM"
+fldac@units = "mm"
+plot(0) = gsn_csm_contour_map(wks,fldac,res) 
+delete(fld)
+delete(fldac)
+
+fld = g->Data(:,:)
+fld = fld * 39.3701 ; convert to inches from m
+print("fldobs="+min(fld)+"  "+max(fld))
+fld@long_name = "NOAA"
+fld@units = "mm"
+plot(1) = gsn_csm_contour_map(wks,fld,res) 
+delete(fld)
+
+ gsn_panel(wks,plot,(/1,2/),resP)                     ; now draw as one plot

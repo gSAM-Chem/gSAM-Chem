@@ -1,0 +1,78 @@
+&MICRO_M2005
+!douse_reffc = .true.
+!dopredictNc  = .true.
+!ccnconst = 1000.
+!doicemicro = .false.
+/
+&MICRO_THOMPSON
+!doicemicro = .false.
+/
+&SGS_TKE
+dosmagor = .true.
+/
+
+&PARAMETERS
+
+! caseid ='32x72_M2005',
+ caseid ='64x72_SAM1MOM',
+
+ nrestart = 0,
+
+ perturb_type = -1, 
+ 
+ dofixdynamics = .true.
+
+ OCEAN = .true.,
+
+ dosgs		= .false.,
+ dodamping 	= .false.,
+ doupperbound  	= .false.,
+ docloud 	= .true.,
+ doprecip 	= .false., 
+ dolongwave	= .false.,
+ doshortwave	= .false.,
+ dosurface 	= .false.,
+ dolargescale 	= .false.,
+ doradforcing   = .false.,
+ dosfcforcing   = .false.,
+ docoriolis 	= .false.,
+
+ tabs_s = 300.
+
+ dx = 	1000.,
+ dy = 	1000.,
+
+ dt = 	10.,
+ 
+ day0=80.,
+
+ doperpetual = .true.
+ latitude0 = 0.
+ longitude0 = 0.
+
+ nrad = 90
+
+nstop 	= 4320,
+nprint 	= 60,
+nstat 	= 90,
+nstatfrq= 15,
+
+doSAMconditionals = .false.
+dosatupdnconditionals = .false.
+
+
+ nsave2D	= 90,
+ nsave2Dstart	= 999999990,
+ nsave2Dend	= 999164000,
+ save2Dbin      = .false.
+
+ nsave3D	= 10,
+ nsave3Dstart	= 0,
+ nsave3Dend	= 999999999,
+ save3Dbin      = .false.
+ save3Dsep      = .true.
+
+/ 
+
+
+

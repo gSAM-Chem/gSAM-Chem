@@ -1,0 +1,97 @@
+&PARAMETERS
+
+caseid ='576x288x74_30s_nadvmom23_0.5_tmp'
+
+nadv_mom = 23
+alpha_hybrid = 0.5
+
+earth_factor = 1.
+
+nrestart = 0,
+
+!dodebug = .true.
+
+gmg_precision = 1.e-6
+
+!perturb_type = -1,
+perturb_type = 13,
+
+doterrain = .true.
+terrain_type = 10
+
+dosgs           = .true.,
+
+dodamping = .true.,
+dodamping_poles = .true.,
+
+dt = 30.,
+day0=0.,
+nstop    = 86400,
+nelapse  = 86400, 
+nprint   = 60,
+nstat    = 2880,
+nstatfrq = 24,
+
+doglobal =.true.
+
+!dx = 156250.
+!dy = 156000.
+
+
+restart_sep = .false.,
+!restart_skip = 9,
+
+
+dofplane = .false.
+docoriolis = .true.,
+
+doseasons = .false.,
+
+doradlat = .true.,
+doradlon = .true.,
+nrad = 60,
+
+tabs_s = 300.
+
+OCEAN = .true.,
+
+doupperbound    = .false.,
+docloud         = .false.,
+doprecip        = .false.,
+dolongwave      = .false.,
+doshortwave     = .false.,
+dosurface       = .false.,
+dolargescale    = .false.,
+doradforcing    = .false.,
+dosfcforcing    = .false.,
+donudging_uv    = .false.,
+donudging_tq    = .false.,
+
+tauls = 86400.,
+
+SFC_FLX_FXD    = .false.,
+SFC_TAU_FXD    = .false.,
+
+doisccp = .false.,
+
+doSAMconditionals = .false.
+dosatupdnconditionals = .false.
+
+nsave2D = 360,
+nsave2Dstart    = 0,
+nsave2Dend      = 999999999,
+save2Dsep = .true.
+save2Davg = .false.
+
+nsave3D = 360,
+nsave3Dstart    = 0,
+nsave3Dend      = 999999999,
+save3Dbin      = .false.
+
+nmovie       = 60,
+nmoviestart  = 99999990
+nmovieend    = 99960480
+
+/
+
+

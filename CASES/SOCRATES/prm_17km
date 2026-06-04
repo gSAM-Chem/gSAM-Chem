@@ -1,0 +1,139 @@
+&SLM
+readinitsoil = .true.
+readland = .true.
+readsoil = .true.
+readseaice = .true.
+readsnow = .true.,
+
+soilinitfile = '/glade/u/home/marat/SAM7.3/GLOBAL_DATA/BIN/soil_init_2018021600_2304x1152_dyvar_era5.bin'
+seaicefile = '/glade/u/home/marat/SAM7.3/GLOBAL_DATA/BIN/icemask_2018021600-2018022300_2304x1152_dyvar_era5.bin'
+snowfile = '/glade/u/home/marat/SAM7.3/GLOBAL_DATA/BIN/snowd_2018021600-2018022300_2304x1152_dyvar_era5.bin'
+
+soilfile = '/glade/u/home/marat/SAM7.3/GLOBAL_DATA/BIN/soil_2304x1152_dyvar.bin'
+landtypefile = '/glade/u/home/marat/SAM7.3/GLOBAL_DATA/BIN/landtype_2304x1152_dyvar.bin'
+LAIfile = '/glade/u/home/marat/SAM7.3/GLOBAL_DATA/BIN/lai_2304x1152_dyvar.bin'
+/
+&PARAMETERS
+
+caseid ='2304x1152x74_15s_17km_1'
+
+date0 = 2018021600,
+
+nrestart = 0,
+
+dt = 15,
+year0 = 2018,
+
+nstop    = 5760,
+nelapse = 5760, 
+nprint   = 60,
+nstat    = 5760,
+nstatfrq = 24,
+
+dodebug = .false.
+
+doglobal =.true.
+doterrain= .true.
+doseawater = .true.
+
+gmg_precision = 1.e-4
+
+readlat = .true.
+latlonfile = './GRIDS/lat_1152'
+
+ISLAND = .true.,
+readinit = .true.
+readlandmask = .true.
+readsst = .true.
+readterr = .true.
+reado3 = .true.
+
+initfile = '/glade/u/home/marat/SAM7.3/GLOBAL_DATA/BIN/init_2018021600_2304x1152_dyvarx74_era5.bin'
+sstfile = '/glade/u/home/marat/SAM7.3/GLOBAL_DATA/BIN/sst_2018021600-2018022300_2304x1152_dyvar_era5.bin'
+
+landmaskfile = '/glade/u/home/marat/SAM7.3/GLOBAL_DATA/BIN/landmask_2304x1152_dyvar.bin'
+terrainfile = '/glade/u/home/marat/SAM7.3/GLOBAL_DATA/BIN/terrain_2304x1152_dyvar.bin'
+o3file = '/glade/u/home/marat/SAM7.3/GLOBAL_DATA/BIN/ozone_2018021600_2304x1152_dyvarx74_era5.bin'
+
+nens = 0
+
+caseid_restart ='',
+case_restart ='',
+
+!perturb_type = 7,
+!perturb_type = -1,
+
+dodamping_w = .true.,
+
+doseasons = .true.,
+
+
+restart_sep = .true.,
+!restart_skip = 9,
+
+dofplane = .false.
+docoriolis = .true.,
+
+dolongwave      = .true.,
+doshortwave     = .true.,
+doradlat = .true.,
+doradlon = .true.,
+nrad = 120,
+
+dodynamicocean = .false.,
+dodynamicland = .true.,
+dodynamicsoil = .false.,
+
+nxco2 = 1.,
+dosgs           = .true.,
+dodamping       = .true.,
+doupperbound    = .false.,
+docloud         = .true.,
+doprecip        = .true.,
+dosurface       = .true.,
+dolargescale    = .false.,
+doradforcing    = .false.,
+dosfcforcing    = .true.,
+donudging_uv    = .false.,
+donudging_tq    = .false.,
+
+tauls = 86400.,
+
+SFC_FLX_FXD    = .false.,
+SFC_TAU_FXD    = .false.,
+
+doisccp = .false.,
+
+doSAMconditionals = .false.
+dosatupdnconditionals = .false.
+
+nsave2D = 240,
+nsave2Dstart    = 0,
+nsave2Dend      = 999999999,
+save2Dsep = .true.
+save2Davg = .false.
+save2Drada = .true.
+
+nsave2DL = 240,
+nsave2DLstart    = 0,
+nsave2DLend      = 999999999,
+save2DLsep = .true.
+save2DLavg = .false.
+
+nsave2DZ = 5760,
+nsave2DZstart    = 0,
+nsave2DZend      = 999999999,
+save2DZsep = .true.
+
+nsave3D = 720,
+nsave3Dstart    = 0,
+nsave3Dend      = 999999999,
+save3Dbin      = .false.
+
+nmovie       = 60,
+nmoviestart  = 99999990
+nmovieend    = 99960480
+
+/
+
+

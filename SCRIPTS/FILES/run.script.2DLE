@@ -1,0 +1,18 @@
+#!/bin/bash -l
+#PBS -N mpi_job
+#PBS -A UNSB0034
+##PBS -l select=1:ncpus=12:mpiprocs=12:mem=400GB
+##PBS -l select=1:ncpus=24:mpiprocs=24:mem=400GB
+#PBS -l select=1:ncpus=24:mpiprocs=24
+#PBS -l place=scatter
+#PBS -l walltime=2:00:00
+#PBS -q casper
+
+export TMPDIR=/glade/scratch/marat/temp
+mkdir -p $TMPDIR
+
+module load netcdf
+module load nco
+
+
+csh 2DL2nc_parallel_ENS.csh

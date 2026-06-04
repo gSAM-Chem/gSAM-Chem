@@ -1,0 +1,130 @@
+&PARAMETERS
+
+caseid ='288x144x38'
+
+nrestart = 0,
+
+nstop    = 1555200,
+nelapse  = 720, 
+nprint   = 90,
+nstat    = 4320,
+nstatfrq = 24,
+
+nxco2 = 3.0,
+
+OCEAN = .true.,
+
+!doglobal =.true.
+!readlat = .true.
+!latlonfile = './GRIDS/lat_144'
+
+dolatlon = .true.
+!donearglobal = .true.
+dlat = 1.
+dlon = 1.
+
+earth_factor = 1.
+
+!doradhomozonal = .true.
+
+doseawater = .true.
+
+doequilocean = .true.
+dossthomozonal = .true.
+doseaice = .true.
+seaicethickness = 1.
+doseaiceevol = .true.
+
+ocean_type = 0
+tabs_s = 300.
+
+doperpetual = .true.,
+doseasons = .false.,
+doequinox = .true.
+zenith_angle = 30.
+doradlat = .true.,
+doradlon = .true.,
+
+dodamping_poles = .true.
+
+gmg_precision = 1.e-6
+
+
+!perturb_type = 7,
+!perturb_type = -1,
+
+dodebug = .false.
+
+dodamping_w = .true.,
+dodamping_u = .true.,
+damping_u_cu = 0.4
+damping_w_cu = 0.45
+
+dt = 20.,
+day0 = 0.,
+restart_sep = .true.,
+!nrestart_skip = 9,
+
+dofplane = .false.
+docoriolis = .true.,
+
+!reado3 = .true.
+!o3file = '/glade/work/marat/Global_Data1/BIN/o3ape_2304x1152x74.bin'
+
+nrad = 45,
+
+!dosolarconstant = .true.,
+!solar_constant = 551.58,
+!zenith_angle   = 42.05,
+
+dosgs           = .true.,
+dodamping       = .true.,
+doupperbound    = .false.,
+docloud         = .true.,
+doprecip        = .true.,
+dolongwave      = .true.,
+doshortwave     = .true.,
+dosurface       = .true.,
+dolargescale    = .false.,
+doradforcing    = .false.,
+dosfcforcing    = .false.,
+donudging_uv    = .false.,
+donudging_tq    = .false.,
+
+tauls = 86400.,
+
+SFC_FLX_FXD    = .false.,
+SFC_TAU_FXD    = .false.,
+
+doSAMconditionals = .false.
+dosatupdnconditionals = .false.
+
+nsave2D = 360,
+nsave2Dstart    = 0,
+nsave2Dend      = 999999999,
+save2Dsep = .true.
+save2Davg = .true.
+
+nsave2DL = 360,
+nsave2DLstart    = 999999999,
+nsave2DLend      = 999999999,
+save2DLsep = .true.
+save2DLavg = .true.
+
+nsave2DZ = 360,
+nsave2DZstart    = 0,
+nsave2DZend      = 999999999,
+save2DZsep = .true.
+
+nsave3D = 360,
+nsave3Dstart    = 0,
+nsave3Dend      = 999999999,
+save3Dbin      = .false.
+
+nmovie       = 60,
+nmoviestart  = 99999990
+nmovieend    = 99960480
+
+/
+
+

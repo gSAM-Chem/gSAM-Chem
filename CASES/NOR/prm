@@ -1,0 +1,209 @@
+&SGS_TKE
+  tk_factor = 0.001
+  doaddTKEdiss = .true.
+/
+
+&MICRO_SAM1MOM
+  icefall_fudge=0.8
+  doprecipdiss = .true.
+  donograupel = .true. ! no graupel, only snow
+  doeiscld = .true.
+  tprmin = 273.16    ! Minimum temperature for rain, K
+  tprmax = 278.16    ! Maximum temperature for snow+graupel, K
+/
+
+&SLM
+readinitsoil = .true.
+readland = .true.
+readsoil = .true.
+readsnow = .true.
+readsnowt = .true.,
+readseaice = .true.
+
+dorunoff = .true.
+
+soilinitfile = './GLOBAL_DATA/BIN_D/soil_init_2018010300_1536x1536_NOR_era5.bin'
+snowfile = './GLOBAL_DATA/BIN_D/snow_2018010300_1536x1536_NOR_era5.bin'
+snowtfile = './GLOBAL_DATA/BIN_D/snowt_2018010300_1536x1536_NOR_era5.bin'
+
+seaicefile = './GLOBAL_DATA/BIN_D/icemask_2018010200-2018010600_1536x1536_NOR_era5.bin'
+soilfile = './GLOBAL_DATA/BIN_D/soil_1536x1536_NOR.bin'
+landtypefile = './GLOBAL_DATA/BIN_D/landtype_1536x1536_NOR.bin'
+LAIfile = './GLOBAL_DATA/BIN_D/lai_1536x1536_NOR.bin'
+/
+
+
+&PARAMETERS
+
+caseid ='1536x1536x72_2.5km_10s_JAN3_SNOW_NEWNUDGE0.02_SPNUDGE20'
+
+nrestart = 0,
+
+!nstop    = 17280, ! 2 days
+nstop    = 25920, ! 3 days
+!nstop    = 34560, ! 4 days
+!nstop    = 43200, ! 5 days
+nprint   = 60,
+nstat    = 360,
+nstatfrq = 12,
+
+dolatlon = .true.
+doregion = .true.
+donudge3D = .true.
+
+dotc = .true.
+
+date0 = 20180103000000,
+
+dodatefilename = .true.
+
+readlatlon = .true.
+latlonfile = './GLOBAL_DATA/BIN_D/latlon_1536x1536_NOR.txt'
+
+dobufferzonex = .true.,
+dobufferzoney = .true.,
+bufferzonex = 0.02
+bufferzoney = 0.02
+
+dofcast = .false.
+dofcast_ice = .false.
+
+doimplicitdiff = .true.
+
+dt = 10.0,
+
+dodamping = .true.,
+dodamping_w = .true.,
+dodamping_u = .true.,
+damping_u_cu = 0.25
+damping_w_cu = 0.3
+
+dosaferestart = .false.
+nrestart_steps = 8640
+restart_sep = .true.,
+
+dodebug = .false.
+
+doterrain= .true.
+doseawater = .true.
+
+ISLAND = .true.,
+readinit = .true.
+readsst = .true.
+readlandmask = .true.
+readterr = .true.
+reado3 = .true.
+
+initfile = './GLOBAL_DATA/BIN_D/init_era5_2018010300_NOR.bin'
+
+sstfile = './GLOBAL_DATA/BIN_D/sst_2018010200-2018010600_1536x1536_NOR_era5.bin'
+
+landmaskfile = './GLOBAL_DATA/BIN_D/landmask_1536x1536_NOR.bin'
+terrainfile = './GLOBAL_DATA/BIN_D/terrain_1536x1536_NOR.bin'
+o3file = './GLOBAL_DATA/BIN_D/ozone_era5_monthly_201712-201802_NOR.bin'
+
+dospectralnudging = .true.
+nx_spectral = 20
+ny_spectral = 20
+
+donudging_uv = .true.
+donudging_w = .false.
+donudging_t = .false.
+donudging_q = .false.
+
+nudge3D_dir = '/glade/derecho/scratch/marat/NUDGE'
+nudge3D_file = '/glade/derecho/scratch/marat/NUDGE/nudge_era5_2018010200-2018010600_NOR_FILELIST.ascii'
+
+!nudge3Dstep_start = 1
+!nudge3Dstep_end = 4320
+
+!nudge3D_tau = 21600.
+nudge3D_tau = 43200.
+!nudge3D_tau = 86400.
+
+nens = 0
+
+!perturb_type = -1,
+
+dofplane = .false.
+docoriolis = .true.,
+docoriolisz = .true.,
+
+doseasons = .true.,
+dolongwave      = .true.,
+doshortwave     = .true.,
+doradlat = .true.,
+doradlon = .true.,
+doradavg = .false.
+nrad = 60,
+
+dodynamicocean = .false.,
+
+nxco2 = 1.,
+dosgs           = .true.,
+doupperbound    = .false.,
+docloud         = .true.,
+doprecip        = .true.,
+dosurface       = .true.,
+dolargescale    = .false.,
+doradforcing    = .false.,
+dosfcforcing    = .false.,
+
+tauls = 86400.,
+
+SFC_FLX_FXD    = .false.,
+SFC_TAU_FXD    = .false.,
+
+doisccp = .false.,
+
+doSAMconditionals = .false.
+dosatupdnconditionals = .false.
+
+nsave2D = 360,
+nsave2Dstart    = 0,
+nsave2Dend      = 999999999,
+save2Dsep = .true.
+save2Davg = .false.
+save2Drada = .false.
+snow2Dout = .true.
+
+nsave2DL = 360,
+nsave2DLstart    = 0,
+nsave2DLend      = 999999999,
+save2DLsep = .true.
+save2DLavg = .true.
+
+nsaveM = 360,
+nsaveMstart    = 99999999,
+nsaveMend      = 999999999,
+saveMsep = .true.
+saveMavg = .false.
+
+nsave2DZ = 360,
+nsave2DZstart    = 9999990,
+nsave2DZend      = 999999999,
+save2DZsep = .true.
+
+nsave3D = 360,
+nsave3Dstart    = 0,
+nsave3Dend      = 999999999,
+save3Dbin      = .false.
+nfiles3D = 16
+
+dostatcoars = .false.
+nstatcoars = 1,
+nstatcoarsstart    = 0,
+nstatcoarsend      = 999999999,
+
+nstatmom = 120,
+nstatmomstart    = 99999999,
+nstatmomend      = 999999999,
+savemomsep = .true.
+
+nmovie       = 60,
+nmoviestart  = 99999990
+nmovieend    = 99960480
+
+/
+
+

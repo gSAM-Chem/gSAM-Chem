@@ -1,0 +1,181 @@
+&SGS_TKE
+ tk_factor = 0.001
+/
+
+&SLM
+readinitsoil = .true.
+readland = .true.
+readsoil = .true.
+readseaice = .true.
+readsnow = .true.,
+
+soilinitfile = './GLOBAL_DATA/BIN_D/soil_init_2019110100_2048x512_dyvar_era5.bin'
+seaicefile = './GLOBAL_DATA/BIN_D/icemask_2019010100-2022010100_2048x512_dyvar_era5_monthly.bin'
+snowfile = './GLOBAL_DATA/BIN_D/snow_2019110100_2048x512_dyvar_era5.bin'
+snowtfile = './GLOBAL_DATA/BIN_D/snowt_2019110100_2048x512_dyvar_era5.bin'
+
+soilfile = './GLOBAL_DATA/BIN_D/soil_2048x512_dyvar.bin'
+landtypefile = './GLOBAL_DATA/BIN_D/landtype_2048x512_dyvar.bin'
+LAIfile = './GLOBAL_DATA/BIN_D/lai_2048x512_dyvar.bin'
+/
+
+
+&MICRO_SAM1MOM
+!  doKKauto = .true.
+!  qci0 = 2.e-5
+!  icefall_fudge = 0.25
+  doeiscld = .true.
+/
+
+&MICRO_P3
+  doeiscld = .true.
+/
+&MICRO_M2005
+  doeiscld = .true.
+!  do_scale_dependence_of_autoconv = .true.
+/
+
+&PARAMETERS
+
+caseid ='2048x512x36_15s_SAM1MOM'
+!caseid ='2048x512x36_15s_M2005'
+!caseid ='2048x512x36_15s_eis_icef25_qi1-4'
+
+nens = 0
+
+nrestart = 0
+
+dodebug = .false.
+
+!nadv_mom = 23
+!alpha_hybrid = 0.8
+
+readlat = .true.
+latlonfile = './GRIDS/lat_512x2048'
+
+date0 = 20191101000000,
+
+doglobal =.true.
+
+nstop    = 3304800,
+nelapse = 1080000,
+!nelapse = 734400,   ! M2005
+!nelapse = 648000,   ! P3
+nprint = 90
+nstat    = 4320,
+nstatfrq = 24,
+
+
+dodatefilename = .true.
+
+doimplicitdiff = .true.
+
+dt = 20.,
+
+gmg_precision = 1.e-6
+
+dodamping = .true.,
+dodamping_poles = .true.,
+dodamping_w = .true.,
+dodamping_u = .true.,
+damping_u_cu = 0.4
+damping_w_cu = 0.45
+
+
+dosaferestart = .false.
+!nrestart_steps = 57600,
+restart_sep = .true.,
+
+doterrain= .true.
+doseawater = .true.
+
+ISLAND = .true.,
+readinit = .true.
+readlandmask = .true.
+readsst = .true.
+readterr = .true.
+reado3 = .true.
+
+initfile = './GLOBAL_DATA/BIN_D/init_era5_2019110100_GLOBAL.bin'
+sstfile = './GLOBAL_DATA/BIN_D/sst_2019010100-2022010100_2048x512_dyvar_era5_monthly.bin'
+
+landmaskfile = './GLOBAL_DATA/BIN_D/landmask_2048x512_dyvar.bin'
+terrainfile = './GLOBAL_DATA/BIN_D/terrain_2048x512_dyvar.bin'
+o3file = './GLOBAL_DATA/BIN_D/ozone_era5_monthly_201910-202202_GLOBAL.bin'
+
+!perturb_type = 7,
+!perturb_type = -1,
+
+dofplane = .false.
+docoriolis = .true.,
+
+doseasons = .true.,
+dolongwave      = .true.,
+doshortwave     = .true.,
+doradlat = .true.,
+doradlon = .true.,
+doradavg = .false.
+nrad = 45,
+
+dodynamicocean = .false.,
+
+nxco2 = 1.,
+dosgs           = .true.,
+doupperbound    = .true.,
+docloud         = .true.,
+doprecip        = .true.,
+dosurface       = .true.,
+dolargescale    = .false.,
+doradforcing    = .false.,
+dosfcforcing    = .false.,
+donudging_uv    = .false.,
+donudging_tq    = .false.,
+
+tauls = 86400.,
+
+SFC_FLX_FXD    = .false.,
+SFC_TAU_FXD    = .false.,
+
+doisccp = .false.,
+
+doSAMconditionals = .false.
+dosatupdnconditionals = .false.
+
+nsave2D = 4320,
+nsave2Dstart    = 0,
+nsave2Dend      = 999999999,
+save2Dsep = .true.
+save2Davg = .true.
+save2Drada = .false.
+
+nsaveM = 4320,
+nsaveMstart    = 0,
+nsaveMend      = 999999999,
+saveMsep = .true.
+saveMavg = .true.
+
+nsave2DL = 4320,
+nsave2DLstart    = 0,
+nsave2DLend      = 999999999,
+save2DLsep = .true.
+save2DLavg = .true.
+
+nsave2DZ = 4320,
+nsave2DZstart    = 0,
+nsave2DZend      = 999999999,
+save2DZsep = .true.
+
+nsave3D = 4320,
+nsave3Dstart    = 0,
+nsave3Dend      = 999999999,
+save3Dbin      = .false.
+nfiles3D = 16
+
+dostatcoars = .false.
+nstatcoars = 240,
+nstatcoarsstart    = 999999990,
+nstatcoarsend      = 999999999,
+
+/
+
+

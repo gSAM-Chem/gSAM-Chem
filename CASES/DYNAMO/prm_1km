@@ -1,0 +1,87 @@
+&SGS_TKE
+dosmagor = .true.
+/
+
+&PARAMETERS
+
+!caseid ='72x72x74_1km_10s_SAM1MOM_lsf3D',
+!caseid ='144x144x74_1km_10s_SAM1MOM_lsf3D_noauto',
+!caseid ='288x288x74_1km_10s_SAM1MOM_lsf3D',
+!caseid ='144x144x74_1km_10s_M2005_lsf3D_noradsnow',
+caseid ='144x144x74_1km_10s_P3_lsf3D_noradallice1',
+!caseid ='144x144x74_1km_10s_THOM_lsf3D',
+
+nrestart = 0,
+
+OCEAN = .true.,
+doseawater = .true.,
+
+
+
+dx = 	1000.,
+dy = 	1000.,
+dt = 	10.,
+
+day0=274.,
+
+nstop 	= 397440,
+!nstop 	= 777600,
+nprint 	= 180,
+nstat 	= 8640,
+nstatfrq= 96,
+
+!dodamping_w = .true.,
+!dodamping_w_cu = 0.6,
+!dodamping_u = .true.,
+!damping_u_cu = 0.3
+
+dosgs		= .true.,
+dodamping 	= .true.,
+doupperbound  	= .true.,
+docloud 	= .true.,
+doprecip 	= .true., 
+dolongwave	= .true.,
+doshortwave	= .true.,
+dosurface 	= .true.,
+dolargescale 	= .true.,
+doradforcing    = .false.,
+dosfcforcing    = .true.,
+docoriolis 	= .false.,
+donudging_uv    = .true.,
+donudging_tq    = .false.,
+
+!doisccp = .true.,
+!domodis = .true.,
+!domisr = .true.,
+
+tauls = 7200.,
+
+SFC_FLX_FXD    = .false.,
+SFC_TAU_FXD    = .false.,
+
+longitude0 = 76.5,
+latitude0 = 3.,
+
+nrad = 90,
+
+doseasons = .true.,
+
+doSAMconditionals = .false.
+dosatupdnconditionals = .false.
+
+
+nsave2D	= 1080,
+nsave2Dstart	= 0, 
+nsave2Dend	= 999164000,
+save2Davg = .false.
+save2Dsep = .true.
+
+nsave3D	= 1080,
+nsave3Dstart	= 0,
+nsave3Dend	= 999999999,
+save3Dbin      = .false.
+
+/ 
+
+
+

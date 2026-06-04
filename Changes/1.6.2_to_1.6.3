@@ -1,0 +1,18 @@
+SRC/SLM/slm_vars:  The sstxy was defined for first radiation call in slm_init without subtracting t00. As the result, radiative fluxes at the first model call were screwed up.
+
+SGS_TKE: corrected inconsistency for computation of molecular viscosity and conductivity fluxes at walls in DNS mode. 
+affected fiiles:
+diffuse_mom3D_DNS.f90
+diffuse_scalar3D_DNS.f90
+sgs.f90
+
+SRC/SGS_TKE/sgs.f90
+error in index that may cause instability of diffusion in some cases, the 
+array ady may go beying its defined indexes.
+was:
+cy = dtn/(dy*min(ady(j),ady(j-YES3D)))**2
+should be:
+cy = dtn/(dy*min(ady(j),ady(j+YES3D)))**2
+
+SRC/setgrid.f90
+the doradlon was not implemented. Instead ot doradlon, dolatlon was used.

@@ -1,0 +1,12 @@
+*.o
+*.mod
+*.a
+*.so
+*.exe
+
+OUT_*
+RESTART/*
+*.nc
+
+.vscode/
+.DS_Store

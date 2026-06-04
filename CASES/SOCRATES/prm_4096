@@ -1,0 +1,169 @@
+&SLM
+readinitsoil = .true.
+readland = .true.
+readsoil = .true.
+readseaice = .true.
+readsnow = .true.,
+
+soilinitfile = '/glade/u/home/marat/SAM7.5/GLOBAL_DATA/BIN_S/soil_init_2018021600_8192x4096_dyvar_era5.bin'
+seaicefile = '/glade/u/home/marat/SAM7.5/GLOBAL_DATA/BIN_S/icemask_2018021600-2018022200_8192x4096_dyvar_era5.bin'
+snowfile = '/glade/u/home/marat/SAM7.5/GLOBAL_DATA/BIN_S/snowd_2018021600-2018022200_8192x4096_dyvar_era5.bin'
+
+soilfile = '/glade/u/home/marat/SAM7.5/GLOBAL_DATA/BIN_S/soil_8192x4096_dyvar.bin'
+landtypefile = '/glade/u/home/marat/SAM7.5/GLOBAL_DATA/BIN_S/landtype_8192x4096_dyvar.bin'
+LAIfile = '/glade/u/home/marat/SAM7.5/GLOBAL_DATA/BIN_S/lai_2018021600-2018022200_8192x4096_dyvar_era5.bin'
+/
+&PARAMETERS
+
+caseid ='8192x4096x74_sadv_noradavg_ad'
+
+date0 = 20180216000000,
+
+nrestart = 0,
+
+dofcast = .false.
+dofcast_ice = .true.
+
+dosaferestart = .true.
+
+dt = 10.0,
+
+dodamping       = .true.,
+dodamping_poles       = .true.,
+dodamping_w = .true.,
+dodamping_u = .true.,
+damping_u_cu = 0.3
+damping_w_cu = 0.25
+
+dolongwave      = .true.,
+doshortwave     = .true.,
+doradlat = .true.,
+doradlon = .true.,
+doradavg = .false.
+
+nrad = 90,
+
+dokink = .false.
+
+
+nstop    = 9360,
+!nelapse = 360, 
+nprint   = 30,
+nstat    = 360,
+nstatfrq = 12,
+
+nrestart_skip = 11,
+
+dodebug = .false.
+
+doglobal =.true.
+doterrain= .true.
+doseawater = .true.
+
+gmg_precision = 1.e-6
+
+readlat = .true.
+latlonfile = './GRIDS/lat_4096'
+
+ISLAND = .true.,
+readinit = .true.
+readlandmask = .true.
+readsst = .true.
+readterr = .true.
+reado3 = .true.
+
+initfile = '/glade/u/home/marat/SAM7.5/GLOBAL_DATA/BIN_S/init_era5_2018021600_1440x721x37.bin'
+sstfile = '/glade/u/home/marat/SAM7.5/GLOBAL_DATA/BIN_S/sst_2018021600-2018022200_8192x4096_dyvar_era5.bin'
+landmaskfile = '/glade/u/home/marat/SAM7.5/GLOBAL_DATA/BIN_S/landmask_8192x4096_dyvar.bin'
+terrainfile = '/glade/u/home/marat/SAM7.5/GLOBAL_DATA/BIN_S/terrain_8192x4096_dyvar.bin'
+o3file = '/glade/u/home/marat/SAM7.5/GLOBAL_DATA/BIN_S/ozone_2018021600_8192x4096_dyvarx74_era5.bin'
+
+donudge3D = .true.
+nudge3D_dir = './GLOBAL_DATA/NUDGE'
+nudge3D_file = './GLOBAL_DATA/NUDGE/nudge_era5_2018021600_2018022600_1280x640x37_FILELIST.ascii'
+nudge3D_tau = 86400.
+
+nens = 0
+
+caseid_restart ='',
+case_restart ='',
+
+!perturb_type = 7,
+!perturb_type = -1,
+
+doseasons = .true.,
+
+
+restart_sep = .true.,
+!restart_skip = 9,
+
+dofplane = .false.
+docoriolis = .true.,
+
+dodynamicocean = .false.,
+dodynamicland = .true.,
+dodynamicsoil = .false.,
+
+nxco2 = 1.,
+dosgs           = .true.,
+doupperbound    = .false.,
+docloud         = .true.,
+doprecip        = .true.,
+dosurface       = .true.,
+dolargescale    = .false.,
+doradforcing    = .false.,
+dosfcforcing    = .true.,
+donudging_uv    = .false.,
+donudging_tq    = .false.,
+
+tauls = 86400.,
+
+SFC_FLX_FXD    = .false.,
+SFC_TAU_FXD    = .false.,
+
+doisccp = .false.,
+
+doSAMconditionals = .false.
+dosatupdnconditionals = .false.
+
+nsave2D = 180,
+nsave2Dstart    = 0,
+nsave2Dend      = 999999999,
+save2Dsep = .true.
+save2Davg = .false.
+save2Drada = .true.
+
+nsave2DL = 180,
+nsave2DLstart    = 0,
+nsave2DLend      = 999999999,
+save2DLsep = .true.
+save2DLavg = .false.
+
+nsave2DZ = 8640,
+nsave2DZstart    = 0,
+nsave2DZend      = 999999999,
+save2DZsep = .true.
+
+nsave3D = 180,
+nsave3Dstart    = 0,
+nsave3Dend      = 999999999,
+save3Dbin      = .false.
+nfiles3D = 16
+
+nstattend = 360,
+nstattendstart    = 999999999,
+nstattendend      = 999999999,
+nfilestend = 16
+
+nstatmom = 120,
+nstatmomstart    = 99999999,
+nstatmomend      = 999999999,
+savemomsep = .true.
+
+nmovie       = 60,
+nmoviestart  = 99999990
+nmovieend    = 99960480
+
+/
+
+

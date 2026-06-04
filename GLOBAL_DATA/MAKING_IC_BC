@@ -1,0 +1,79 @@
+This instructions for creating global datasets using NCAR Command Language (NCL)
+
+1) create the new grid files in gSAM's GRIDS iusing grid.f90 utility there.
+   The instructions are in that file's header.
+   Or, you can use already created files there for different grid sizes.
+
+2) creat a directory for binary data and directory for netcdf data.
+It is advisable to create the directories on some disk with large storage
+and then create the symbolic links .
+For example, let's say you created directories on some remote disk disk2 like
+
+mkdir /disk2/DATA/BIN_D 
+mkdir /disk2/DATA/NC_D 
+
+cd to GLOBAL_DATA directory (the directory where this file is).
+
+create symbolic links BUN_D and NC_D:
+
+ln -s  /disk2/DATA/BIN_D BIN_D
+ln -s  /disk2/DATA/NC_D NC_D
+
+Now you can work with BIN_D and NC_D as if they are local directories in this GLOBAL_DATA directory.
+
+3) Assuming that you downloaded the gSAM_Global_Data directory already, create a
+local symbolic link called DATA to that directory. For example, if the
+aferomentioned directory's path is /disk2/DATA/gSAM_Global_Data, execute command:
+
+ln -s /disk2/DATA/gSAM_Global_Data DATA
+
+4) Now prepare the data:
+
+edit, compile and run make_2D_terr.f90 (read instructions in that file)
+Then, edit, compile and run make_2D_landtype.f90 (read instructions in that file)
+
+For regional datasets, use *.f90 files with REGION in their names.
+
+Note: as the datasets used to produce the data are very large, you would
+need to run the executables on a computer with large RAM.
+
+5) convert the resultant binary files (in BIN_D directory) to netcdf files:
+(make sure the path to the files are correct in the bin2nc_terr.ncl and bin2nc_landtype.ncl)
+
+ncl bin2nc_terr.ncl   ! result is in NC_D/out_terr.nc
+ncl bin2nc_landtype.ncl   ! result is in NC_D/out_landtype.nc
+
+using your favorite netcdf viewing tool (for example, ncview) 
+take a look at the resultant files to make sure they look okey
+
+4) rename the netcdf files making them identify information storred in them:
+
+mv NC_D/out_terr.nc NC_D/terrain_<nlonxnlat>_<anything>.nc
+mv NC_D/out_landtype.nc NC_D/landtype_<nlonxnlat>_<anything>.nc
+
+(For example, terrain_256x512_global_dyvar.nc)
+
+5) now you can produce other datasets:
+
+First, create files with time inviriant fields using the NCL utility make_2D_invar.ncl
+It will create binary (and netcdf) landmask, monthly LAI, clay/sand files.
+You would have to edit the file for correct dimensions and correct landtype netcdf file
+that you created at the previous steps. Then execute
+ 
+ncl make_2D_invar.ncl  
+
+Next, create other datasets. Here are some examples based on using ERA5
+
+Here you should use your skills how to interpolate the data to your new grid
+which is defined by landtype netcdf file.
+
+ncl make_2D_evol_sst_ci.ncl     create SST and seaice
+ncl make_2D_init_snowd_era5.ncl  create snow
+ncl make_2D_init_soil_era5.ncl   create initial conditions for soil
+
+Note thatthe 3D initial conditions and 3D ozone are on ERA5 grid, 
+the model will interpolate them itself during the run,
+so the should be prepared only once
+(not for specific GSAM's resolution)
+
+edit and run make_3D_init.ncl and make_3D_ozone.ncl
