@@ -1,0 +1,182 @@
+%SGS_TKE
+  tk_factor = 0.001
+/
+
+&MICRO_SAM1MOM
+  doKKauto = .true.
+  icefall_fudge=1.
+  doeiscld = .true.
+/
+
+&MICRO_P3
+  doeiscld = .true.
+/
+&MICRO_M2005
+  doeiscld = .true.
+!  do_scale_dependence_of_autoconv = .true.
+/
+
+&SLM
+readinitsoil = .true.
+readland = .true.
+readsoil = .true.
+
+soilinitfile = './GLOBAL_DATA/BIN_D/soil_init_2020110100_960x960_MAL_era5.bin'
+
+soilfile = './GLOBAL_DATA/BIN_D/soil_960x960_MAL.bin'
+landtypefile = './GLOBAL_DATA/BIN_D/landtype_960x960_MAL.bin'
+LAIfile = './GLOBAL_DATA/BIN_D/lai_960x960_MAL.bin'
+/
+
+
+&PARAMETERS
+
+caseid ='960x960_MAL_2km_10s_SAM1MOM_eis'
+
+nrestart = 0,
+
+dolatlon = .true.
+doregion = .true.
+donudge3D = .true.
+
+date0 = 20201101000000,
+
+dodatefilename = .true.
+
+readlatlon = .true.
+latlonfile = './GLOBAL_DATA/BIN_D/latlon_960x960_MAL.txt'
+
+doimplicitdiff = .true.
+
+dt = 10.0,
+
+dodamping = .true.,
+dodamping_w = .true.,
+dodamping_u = .true.,
+damping_u_cu = 0.25
+damping_w_cu = 0.3
+
+nstop    = 86400,
+!nelapse = 34560, 
+nprint   = 60,
+nstat    = 360,
+nstatfrq = 12,
+
+dosaferestart = .false.
+nrestart_steps = 8640
+restart_sep = .true.,
+
+dodebug = .false.
+
+doterrain= .true.
+doseawater = .true.
+
+ISLAND = .true.,
+readinit = .true.
+readsst = .true.
+readlandmask = .true.
+readterr = .true.
+reado3 = .true.
+
+initfile = './GLOBAL_DATA/BIN_D/init_era5_2020110100_GLOBAL.bin'
+sstfile = './GLOBAL_DATA/BIN_D/sst_2020110100-2020110300_960x960_MAL_era5.bin'
+landmaskfile = './GLOBAL_DATA/BIN_D/landmask_960x960_MAL.bin'
+terrainfile = './GLOBAL_DATA/BIN_D//terrain_960x960_MAL.bin'
+o3file = './GLOBAL_DATA/BIN_D/ozone_era5_monthly_202001-202012_MAL.bin'
+
+donudging_uv = .true.
+donudging_w = .true.
+donudging_t = .true.
+donudging_q = .false.
+
+nudge3D_dir = './GLOBAL_DATA/NUDGE'
+nudge3D_file = './GLOBAL_DATA//NUDGE/nudge_era5_2020110100_2020110300_MAL_FILELIST.ascii'
+nudge3D_tau = 21600.
+
+nens = 0
+
+!perturb_type = -1,
+
+dofplane = .false.
+docoriolis = .true.,
+docoriolisz = .false.,
+
+doseasons = .true.,
+dolongwave      = .true.,
+doshortwave     = .true.,
+doradlat = .true.,
+doradlon = .true.,
+doradavg = .false.
+nrad = 90,
+
+dodynamicocean = .false.,
+
+nxco2 = 1.,
+dosgs           = .true.,
+doupperbound    = .false.,
+docloud         = .true.,
+doprecip        = .true.,
+dosurface       = .true.,
+dolargescale    = .false.,
+doradforcing    = .false.,
+dosfcforcing    = .false.,
+donudging_uv    = .false.,
+donudging_tq    = .false.,
+
+tauls = 86400.,
+
+SFC_FLX_FXD    = .false.,
+SFC_TAU_FXD    = .false.,
+
+doisccp = .false.,
+
+doSAMconditionals = .false.
+dosatupdnconditionals = .false.
+
+nsave2D = 360,
+nsave2Dstart    = 0,
+nsave2Dend      = 999999999,
+save2Dsep = .true.
+save2Davg = .false.
+save2Drada = .true.
+
+nsave2DL = 360,
+nsave2DLstart    = 0,
+nsave2DLend      = 999999999,
+save2DLsep = .true.
+save2DLavg = .false.
+
+nsaveM = 360,
+nsaveMstart    = 0,
+nsaveMend      = 999999999,
+saveMsep = .true.
+saveMavg = .false.
+
+nsave2DZ = 360,
+nsave2DZstart    = 999999999,
+nsave2DZend      = 999999999,
+save2DZsep = .true.
+
+nsave3D = 1080,
+nsave3Dstart    = 0,
+nsave3Dend      = 999999999,
+save3Dbin      = .false.
+nfiles3D = 16
+
+dostatcoars = .false.
+nstatcoars = 360,
+nstatcoarsstart    = 0,
+nstatcoarsend      = 999999999,
+
+nstatmom = 120,
+nstatmomstart    = 99999999,
+nstatmomend      = 999999999,
+savemomsep = .true.
+
+nmovie       = 60,
+nmoviestart  = 99999990
+nmovieend    = 99960480
+
+/
+
+

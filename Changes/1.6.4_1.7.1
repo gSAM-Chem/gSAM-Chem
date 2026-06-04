@@ -1,0 +1,85 @@
+Very important change: Implemented new more robust Geometric Multi-grid solver. Instead of gmg.f90 file, the solver is now in a separate GMG directory. Genged the pressure-gmg.f90 to accomodate some changes to the GMG interface.
+
+advect_all_scalars.f90
+
+added initiliztion of instantanous precipitation precinst(:,:) before sedimentation calls.
+Previously it was initialized in zero.f90 preventing it to affect the SLM's incoming precipitation.
+
+
+grid.f90
+
+added variable year - current year
+
+
+
+main.f90
+
+added code by Peter Blossey to implement walltime computation to help simulations stop
+before their queue time runs out.
+
+
+MICRO_M2005/microphysics.f90
+
+fixed upper limit to nzm for tlat and qpfall. Also, initialized qc array in satadj_liquid()
+
+MICRO_M2005/module_mp_graupel.f90
+
+changed dx**2 with actual grid cell area for scale-dependent autoconversion
+changed fall-speed parameter BI from 1 to 0.865
+changed DCS = 125.E-6 to DCS = 250.E-6
+change the maximum velocity of graupel UMG and UNG from 10 m/s from more like-hail value of 20 m/s
+
+
+MICRO_P3/micro_params.f90
+
+added doeiscld logical flag
+added do_scale_dependence_of_autoconv
+added icefall_fudge 
+
+
+MICRO_P3/microphysics.f90
+
+corrected a bug in reffi computation (Peter Blossey)
+implemented code for doeiscld flag
+
+MICRO_P3/module_mp_p3.f90
+
+MICRO_SAM1MOM/microphysics.f90
+
+put maximum for fall-speed of rain, snow and graupel.
+
+oceflx.f90
+
+changed minimum wind speed from 0.5 to 1.0 m/s
+
+pressure_gmg.f90
+
+changed some ways of MPI implementation 
+
+
+RAD_CAM/rad_full.f90
+
+fixed bug in collection SFC and TOA computation for mean statistics in the case of topography
+
+RAD_RRTM/rad.f90
+
+Peter Blossey implemnted the partical cloud cover for a cell
+fixed bug with cloud fraction over topography
+fixed bug in collection SFC and TOA computation for mean statistics in the case of topography
+fixed bug in XY SFC downward fluxes collection
+made surface emmisivity to be specified to emis-water constant in consts.f90
+also made emissivity over land to be one as the skin-temperature sstxy already implicitly accounts
+for actual emissivity of land types or soil.
+
+
+read_field3D.f90
+
+Numerous bugs fixes and improvements
+
+
+SLM/slm_vars.f90
+
+
+changed vegetation albedos (tuned using CERES) for various types.
+
+

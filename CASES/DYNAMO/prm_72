@@ -1,0 +1,117 @@
+&SGS_TKE
+dosmagor = .true.
+!tk_factor = 0.001
+/
+
+&MICRO_SAM1MOM
+!  icefall_fudge=0.8
+!  qci0 = 2.e-5
+!  doeiscld = .true.
+!  doKKauto = .true.
+  do_scale_dependence_of_autoconv = .true.
+/
+
+&MICRO_M2005
+! do_scale_dependence_of_autoconv = .true.
+! Nc0 = 200.
+!  doeiscld = .true.
+/
+
+&MICRO_P3
+!  doeiscld = .true.
+! do_scale_dependence_of_autoconv = .true.
+! doallice_radiatively_active = .true.
+! icefall_fudge=0.8
+/
+
+
+&PARAMETERS
+
+!caseid ='128x128x64_1km_10s_P3_RRTM',
+!caseid ='128x128x72_1km_10s_M2005_CAM_SGSSAM',
+!caseid ='32x32x72_4km_10s_M2005_CAM_SCAU_ICESNOW250_JOONG',
+!caseid ='32x32x72_4km_10s_P3_CAM_SCAU',
+!caseid ='128x128x72_1km_10s_SAM1MOM.SAM_CAM_SGSSAM_RADEMS12',
+!caseid ='128x128x72_1km_10s_P3.SAM',
+caseid ='128x128x72_1km_10s_SAM1MOM_CAM_SCAU',
+!caseid ='512x512x64_0.25m_10s_SAM1MOM',
+!caseid ='512x512x64_0.25km_10s_P3',
+
+nrestart = 0,
+
+doimplicitdiff = .true.
+
+OCEAN = .true.,
+doseawater = .true.,
+
+dx = 	1000.,
+dy = 	1000.,
+dt = 	10.,
+
+!nadv_mom = 23
+!alpha_hybrid = 0.8
+
+day0=274.,
+
+nrad = 30,
+nrad_ems = 12
+doseasons = .true.,
+
+nstop 	= 786240,
+nprint 	= 90,
+nstat 	= 1080,
+nstatfrq= 96,
+
+nrestart_steps = 86400
+
+!dodamping_w = .true.,
+!dodamping_u = .true.,
+!damping_u_cu = 0.25
+!damping_w_cu = 0.5
+
+dosgs		= .true.,
+dodamping 	= .true.,
+doupperbound  	= .true.,
+docloud 	= .true.,
+doprecip 	= .true., 
+dolongwave	= .true.,
+doshortwave	= .true.,
+dosurface 	= .true.,
+dolargescale 	= .true.,
+doradforcing    = .false.,
+dosfcforcing    = .true.,
+docoriolis 	= .false.,
+donudging_uv    = .true.,
+donudging_tq    = .false.,
+
+!doisccp = .true.,
+!domodis = .true.,
+!domisr = .true.,
+
+tauls = 7200.,
+
+SFC_FLX_FXD    = .false.,
+SFC_TAU_FXD    = .false.,
+
+longitude0 = 76.5,
+latitude0 = 3.,
+
+doSAMconditionals = .false.
+dosatupdnconditionals = .false.
+
+
+nsave2D	= 4320,
+nsave2Dstart	= 999999990, 
+nsave2Dend	= 999164000,
+save2Davg = .false.
+save2Dsep = .true.
+
+nsave3D	= 4320,
+nsave3Dstart	= 9999990,
+nsave3Dend	= 999999999,
+save3Dbin      = .false.
+
+/ 
+
+
+

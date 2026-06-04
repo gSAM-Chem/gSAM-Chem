@@ -1,0 +1,98 @@
+&SGS_TKE
+dosmagor = .true.
+/
+
+&SLM
+ LAI0 = 6.4353
+ landtype0 = 1
+ dosoilvolumetric = .true.
+ dorunoff = .false.
+/
+
+&PARAMETERS
+
+day0 = 170.
+
+latitude0 = 35.
+longitude0 = 267.
+
+doradavg = .true.
+
+nrestart = 0
+
+caseid ='64x64x72_MOD_LAND01',
+
+doterrain = .false.
+terrain_type = 4  
+
+!docap_snd_cu = .true.
+
+doimplicitdiff = .true.
+
+ docloud 	= .true.,
+ doprecip 	= .true., 
+
+ doseasons = .true.
+ dolongwave	= .true.,
+ doshortwave	= .true.,
+ nrad = 90
+
+ nstop 	= 60480,
+ nprint = 60,
+ nstat 	= 360,
+ nstatfrq = 12,
+ dx = 3000.
+ dy = 3000.
+ dt = 10.,
+
+ nrestart_steps = 86400,
+
+ LAND = .true.,
+
+ dosgs		= .true.,
+
+ dodamping 	= .true.,
+
+ doupperbound  	= .false.,
+ dosmoke        = .false.
+ dosurface 	= .true.,
+ dolargescale 	= .false.,
+ doradforcing   = .false.,
+ dosfcforcing   = .false.,
+ donudging_uv   = .true.,
+ donudging_tq   = .true.,
+
+ tauls = 21600.,
+ tautqls = 21600.,
+
+ SFC_FLX_FXD    = .false.,
+ SFC_TAU_FXD    = .false.,
+
+ nsave2D	= 360,
+ nsave2Dstart	= 0,
+ nsave2Dend	= 99960480,
+ save2Dsep = .true.
+ save2Davg = .false.
+
+ nsave3D	= 720,
+ nsave3Dstart	= 99999999,
+ nsave3Dend	= 99960480,
+
+ nsaveM = 720
+ nsaveMstart    = 9999999,
+ nsaveMend      = 999999999,
+ saveMsep = .true.
+ saveMavg = .false.
+
+ nsave2DL = 360,
+ nsave2DLstart    = 0,
+ nsave2DLend      = 999999999,
+ save2DLsep = .true.
+ save2DLavg = .true.
+
+/ 
+
+
+
+
+

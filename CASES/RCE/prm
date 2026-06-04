@@ -1,0 +1,123 @@
+&MICRO_SAM1MOM
+!  doKKauto = .true.
+!
+!  qcw0 = 0.25e-3
+!  qci0 = 1.e-7
+!  icefall_fudge = 0.25
+!  doeiscld = .true.
+/
+
+&MICRO_P3
+!  doeiscld = .true.
+doallice_radiatively_active = .true.
+/
+&MICRO_M2005
+!  doeiscld = .true.
+!  do_scale_dependence_of_autoconv = .true.
+/
+
+
+&SLM ! activated only if LAND=T
+ landtype0 = 4
+ soilt0 = 310.
+ soilw0 = 0.5
+ LAI0 = 6.
+/
+
+&PARAMETERS
+
+caseid ='128x128x72_RRTM_P3_ALLICERAD'
+
+nrestart = 0,
+
+!docolumn = .true.
+!docup = .true.
+!n_cup = 30
+
+!doglobalpresets = .true.
+
+
+dodamping = .true.,
+!dodamping_w = .true.,
+!dodamping_u = .true.,
+!damping_u_cu = 0.4
+!damping_w_cu = 0.45
+
+!doimplicitdiff = .true.
+!doseawater = .true.
+
+dt = 10.,
+dx = 4000.
+dy = 4000.
+
+day0=0.,
+
+nstop    = 86400,
+nprint   = 60,
+nstat    = 8640,
+nstatfrq = 144,
+
+nrestart_steps = 86400
+
+dofplane = .false.
+docoriolis = .false.,
+
+LES_S = .false.
+
+doseasons = .false.,
+!doperpetual = .true.,
+!doequinox = .true.
+nrad = 90,
+nrad_ems = 40
+doradavg = .true.
+
+
+!LAND = .true.,
+OCEAN = .true.,
+tabs_s = 300.,
+
+nxco2 = 1.,
+dosgs           = .true.,
+doupperbound    = .true.,
+docloud         = .true.,
+doprecip        = .true.,
+dolongwave      = .true.,
+doshortwave     = .true.,
+dosurface       = .true.,
+dolargescale    = .false.,
+doradforcing    = .false.,
+dosfcforcing    = .false.,
+donudging_uv    = .false.,
+donudging_tq    = .false.,
+
+tauls = 86400.,
+
+SFC_FLX_FXD    = .false.,
+SFC_TAU_FXD    = .false.,
+
+doisccp = .false.,
+
+doSAMconditionals = .false.
+dosatupdnconditionals = .false.
+
+nsave2D = 8640,
+nsave2Dstart    = 999990,
+nsave2Dend      = 999999999,
+save2Dsep = .true.
+save2Davg = .true.
+!save2Dnetcdf = .true.
+
+nsave2DL = 8640,
+nsave2DLstart    = 999990,
+nsave2DLend      = 999999999,
+!save2DLnetcdf = .true.
+
+nsave3D = 8640,
+nsave3Dstart    = 999990,
+nsave3Dend      = 999999999,
+save3Dbin      = .false.
+save3Dnetcdf = .true.
+
+/
+
+

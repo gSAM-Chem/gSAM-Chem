@@ -1,0 +1,66 @@
+&SGS_TKE
+dosmagor = .false.
+/
+
+&PARAMETERS
+
+day0 = 246.75
+
+latitude0 = 40.48
+longitude0 = 286.199
+
+doradavg = .true.
+
+nrestart = 0
+
+caseid ='32x32x83_TKE_NORAD',
+
+tabs_s = 293.273
+
+doimplicitdiff = .true.
+
+ docloud 	= .true.,
+ doprecip 	= .true., 
+
+ doseasons = .true.
+ dolongwave	= .false.,
+ doshortwave	= .false.,
+ nrad = 90
+
+ nstop 	= 2400,
+ nprint = 60,
+ nstat 	= 20,
+ nstatfrq = 1,
+ dx = 100.
+ dy = 100.
+ dt = 3.,
+
+ nrestart_steps = 86400,
+
+ OCEAN = .true.,
+
+ dosgs		= .true.,
+
+ dodamping 	= .true.,
+
+ doupperbound  	= .false.,
+ dosmoke        = .false.
+ dosurface 	= .true.,
+ dolargescale 	= .false.,
+ doradforcing   = .false.,
+ dosfcforcing   = .false.,
+ donudging_uv   = .true.,
+ donudging_tq   = .true.,
+
+ tauls = 21600.,
+ tautqls = 21600.,
+
+ SFC_FLX_FXD    = .false.,
+ SFC_TAU_FXD    = .false.,
+
+/ 
+
+
+
+
+

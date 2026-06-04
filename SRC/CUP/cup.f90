@@ -1,0 +1,290 @@
+! interface to Kerry Emanuel's convective parameterization
+! and Sandrine Bony's cloud fraction scheme
+! Coded by Marat Khairoutdinov 06/2023
+
+module cup
+
+use mpi_stuff, only: rank, masterproc
+use grid, only : nx, ny, nzm, day
+use params, only: n_cup   ! cu-parameterization calling frequency (in steps)
+implicit none
+
+real, allocatable :: dt_cu3D(:,:,:)    ! convective tendency for temperature (K/s)
+real, allocatable :: dq_cu3D(:,:,:)   ! convective tendency for total vapor (g/g/s)
+real, allocatable :: dqn_ls3D(:,:,:)   ! convective tendency for cloud water (g/g/s)
+real, allocatable :: dcld_ls3D(:,:,:)  ! convective tendency for cloud fraction (g/g/s)
+real, allocatable :: du_cu3D(:,:,:)    ! convective tendency for zonal wind (m/s/s)
+real, allocatable :: dv_cu3D(:,:,:)    ! convective tendency for meridional wind (m/s/s)
+real  dtr_cu(nzm)     ! convective temdency for tracers (1/s) ! not used
+
+real:: precip_cu(nx, ny)=0.   ! convective precipitation (mm/day)
+real:: precip_ls(nx, ny)=0.   ! large-scale precipitation (mm/day)
+real:: wd_cu(nx,ny)=0.        ! conv downdraft vel scale (m/s) - used by surface flux scheme
+real:: dwd_cu(nx,ny)=0.       ! tendency of convective downdraft velocity scale 
+real   tprime_cu              ! convective downdraft temperature scale (m/s)
+real   qprime_cu              ! convective downdraft humidity scale (m/s)
+real:: cbmf(nx,ny)=0.         ! cloud base mass-flux (kg/m2/s). Must be kepr between calls.
+real:: precflux_cu(nzm)=0.    ! profile of convective precipitation 
+
+integer:: nl = nzm-1          ! the highest level for convection to operate
+
+CONTAINS
+
+!----------------------------------------------------------------------------------
+subroutine cup_init()
+  use grid, only: pres
+  integer k
+  allocate (dt_cu3D(nx,ny,nzm), dq_cu3D(nx,ny,nzm), du_cu3D(nx,ny,nzm), dv_cu3D(nx,ny,nzm))
+  allocate (dqn_ls3D(nx,ny,nzm), dcld_ls3D(nx,ny,nzm))
+  dt_cu3D(:,:,:) = 0.
+  dq_cu3D(:,:,:) = 0.
+  du_cu3D(:,:,:) = 0.
+  dv_cu3D(:,:,:) = 0.
+  dqn_ls3D(:,:,:) = 0.
+  dcld_ls3D(:,:,:) = 0.
+  dwd_cu(:,:) = 0.
+
+! determione the highest level for convection to operate
+  do k=1,nzm
+   if(pres(k).gt.50.) then
+     nl = k
+   end if
+  end do
+
+end subroutine cup_init
+
+
+!----------------------------------------------------------------------------------
+subroutine cup_tend()
+
+use vars, only: icycle, nstep, dostatis, dz, dt, dtn, t, tabs, qv, qcl, qci, qpi, qpl, cld, &
+                u, v, dudt, dvdt, &
+                na, pres, presi, prec_xy, preca_xy, prectot, precsfc, precinst, precflux, &
+                tnudge, qnudge, unudge, vnudge, rho, adz, z, wgty
+use consts, only: lcond, lsub, fac_cond, fac_sub
+use microphysics, only: q, qn
+use terrain, only: k_terra
+real tabs_cu(nzm)  ! absolute temperature (K)
+real q_cu(nzm)     ! specific humidity (g/g)
+real qs_cu(nzm)    ! saturation specific humidity (g/g)
+real u_cu(nzm)     ! zonal wind (m/s)
+real v_cu(nzm)     ! meridional wind (m/s)
+real tr_cu(nzm)    ! passive traver to be transported by the scheme
+real p_cu(nzm)     ! mid-level pressure (mb)
+real pi_cu(nzm+1)  ! interface  pressure (mb)
+real dt_cu(nzm)    ! convective temdency for temperature (K/s)
+real dq_cu(nzm)   ! convective temdency for water vapor (g/g/s)
+real du_cu(nzm)    ! convective temdency for zonal wind (m/s/s)
+real dv_cu(nzm)    ! convective temdency for meridional wind (m/s/s)
+real qn_cu(nzm)    ! in-cloud convective cloud water (g/g)
+real pr_cu(nzm)    ! convective precipitation profile (mm/d)
+real mfup_cu(nzm)  ! convective updraft mass-flux (kg/m2/s)
+real mfdn_cu(nzm)  ! convective downdraft mass-flux (kg/m2/s)
+real mfp_cu(nzm)   ! precipitation-driven downdraft mass-flux (kg/m2/s)
+real dt_ls(nzm)    ! convective temdency for temperature (K/s)
+real dq_ls(nzm)    ! convective temdency for water vapor (g/g/s)
+real cld_ls(nzm)   ! cloud fraction associated with convection (0-1)
+real qn_ls(nzm)   ! in-cloud cloud cloud water after Bony's scheme (g/g)
+real lv0_cu(nzm)  ! pscific heat of condensation/deposition
+integer nd, ntra
+integer i,j,k,m
+real, external :: qsatw, qsati
+integer iflag(nzm)            ! flag for errors
+real dtconv  ! convective time step (usually much larger than dtn)
+real coef, coef1, factor, idtconv, om
+real, parameter :: tbgmin = 253.16, a_bg = 1./(273.15-tbgmin) ! for liquid/ice partition
+integer ipbl, minorig, iflags_tot
+real cbmf1, wd1
+
+call t_startf('cup_tend')
+
+if(.not.allocated(dt_cu3D)) then
+  if(masterproc) print*,' cup: 3D tendencies are not initialized. Exitting...'
+  call task_abort()
+end if
+
+if(icycle.eq.1.and.mod(nstep, n_cup).eq.0) then
+
+! update convective rates:
+
+  p_cu(:) = pres(:)
+  pi_cu(:) = presi(:)
+  tr_cu(:) = 0.
+  precflux_cu(:) = 0.
+  nd = nzm
+  nl = nzm-1
+  ntra = 1
+  dtconv = n_cup*dt
+  idtconv = 1./dtconv
+  iflags_tot = 0
+  ipbl = 1
+  minorig = 1
+
+  do k=1,nzm
+   if(pres(k).lt.50.) then
+     nl = k
+     exit
+   end if
+  end do
+  if(masterproc) print*,'calling cumulus parameterization...  nl =',nl
+
+  do j=1,ny
+   do i=1,nx
+      m = k_terra(i,j)
+      tabs_cu(:) = tabs(i,j,:)   
+      q_cu(:) = q(i,j,:)   
+      u_cu(:) = u(i,j,:)   
+      v_cu(:) = v(i,j,:)   
+      do k=m,nzm
+        om = max(0.,min(1.,(tabs_cu(k)-tbgmin)*a_bg))
+        qs_cu(k) = om*qsatw(tabs_cu(k),p_cu(k))+(1-om)*qsati(tabs_cu(k),p_cu(k))
+        lv0_cu(k) = om*lcond+(1.-om)*lsub
+        minorig = 1
+        if(z(k)-z(m).lt.500.) minorig = k
+      end do
+      cbmf1 = cbmf(i,j)
+
+      ! Emanuel's convective scheme:
+      call convect(tabs_cu(m:), q_cu(m:), qs_cu(m:), u_cu(m:), v_cu(m:), &
+                   tr_cu(m:), p_cu(m:), pi_cu(m:), &
+                   lv0_cu(m:), ipbl, minorig, nd-m+1, nl-m+1, ntra, &
+                   dtconv, iflag(1), dt_cu(m:), dq_cu(m:), &
+                   du_cu(m:), du_cu(m:), dtr_cu(m:), precip_cu(i,j), wd1, tprime_cu, &
+                   qprime_cu, cbmf(i,j), qn_cu(m:), mfup_cu(m:), mfdn_cu(m:), mfp_cu(m:), &
+                   pr_cu(m:)) 
+
+!      if(isnan(precip_cu(i,j))) then
+!        print*,'CONVECT failed, exit... '
+!        tabs_cu(:) = tabs(i,j,:)
+!        q_cu(:) = q(i,j,:)
+!        u_cu(:) = u(i,j,:)
+!        v_cu(:) = v(i,j,:)
+!        do k=m,nzm
+!          om = max(0.,min(1.,(tabs_cu(k)-tbgmin)*a_bg))
+!          qs_cu(k) = om*qsatw(tabs_cu(k),p_cu(k))+(1-om)*qsati(tabs_cu(k),p_cu(k))
+!          minorig = 1
+!          if(z(k)-z(m).lt.500.) minorig = k
+!        end do
+!        print*, rank,i,j
+!        print*, m, nzm-m+1, nl-m+1, minorig, ipbl
+!        print*, dtconv
+!        print*, tabs_cu(:)
+!        print*, q_cu(:)
+!        print*, qs_cu(:)
+!        print*, u_cu(:)
+!        print*, v_cu(:)
+!        print*, p_cu(:)
+!        print*, pi_cu(:)
+!        print*, cbmf1
+!        call task_abort()
+!      end if
+
+      precflux_cu(m:) = precflux_cu(m:) + pr_cu(m:)
+
+      ! update temperature and vapor profiles:
+
+      do k=m,nzm
+        tabs_cu(k) = tabs_cu(k) + dtconv*dt_cu(k)
+        om = max(0.,min(1.,(tabs_cu(k)-tbgmin)*a_bg))
+        qs_cu(k) = om*qsatw(tabs_cu(k),p_cu(k))+(1-om)*qsati(tabs_cu(k),p_cu(k))
+        q_cu(k) = q_cu(k) + dtconv*dq_cu(k)
+      end do
+
+      ! Bony's subgrid cloud scheme:
+
+      call clouds_sub_ls(nd-m+1, q_cu(m:), qs_cu(m:), tabs_cu(m:), p_cu(m:), pi_cu(m:), &
+                         lv0_cu(m:), dtconv, qn_cu(m:), cld_ls(m:), qn_ls(m:), precip_ls(i,j), &
+                         dt_ls(m:), dq_ls(m:), iflag(m:))
+
+      if(any(iflag(m:).eq.2)) then
+        print*,'CLOUD_SUB_LS for task',rank,' failed to converge. Exit...'
+        call task_abort()
+      end if
+!      if(precip_cu(i,j).gt.10.) then
+!        print*,'k,z(k),dq_cu(k),dq_ls(k),qn_cu(k),cld_ls(k),qn_ls(k)'
+!        do k=nzm,1,-1
+!         write(*,'(i5,f9.1,5G15.5)') k,z(k),dq_cu(k),dq_ls(k),qn_cu(k),cld_ls(k),qn_ls(k)
+!        end do
+!        stop
+!      end if
+
+      ! update temperature and vapor profiles:
+
+      tabs_cu(m:) = tabs_cu(m:) + dtconv*dt_ls(m:)
+      q_cu(m:) = q_cu(m:) + dtconv*dq_ls(m:)
+
+      ! compute tendencies due to convect and clouds_sub_ls:
+
+      dt_cu3D(i,j,m:) = (tabs_cu(m:) - tabs(i,j,m:))*idtconv
+      dq_cu3D(i,j,m:) = (q_cu(m:) - q(i,j,m:))*idtconv
+      qn_ls(m:) = qn_ls(m:) * cld_ls(m:)
+      dqn_ls3D(i,j,m:) = (qn_ls(m:) - qn(i,j,m:))*idtconv
+      dcld_ls3D(i,j,m:) = (cld_ls(m:) - cld(i,j,m:))*idtconv
+      du_cu3D(i,j,m:) = du_cu(m:)
+      dv_cu3D(i,j,m:) = dv_cu(m:)
+      dt_cu3D(i,j,:m-1) = 0.
+      dq_cu3D(i,j,:m-1) = 0.
+      dqn_ls3D(i,j,:m-1) = 0.
+      dcld_ls3D(i,j,:m-1) = 0.
+      du_cu3D(i,j,:m-1) = 0.
+      dv_cu3D(i,j,:m-1) = 0.
+      dwd_cu(i,j) = (wd1 - wd_cu(i,j))*idtconv
+   end do
+  end do
+
+end if
+
+tnudge = 0.
+qnudge = 0.
+unudge = 0.
+vnudge = 0.
+factor = 1./float(nx*ny)
+
+do k=1,nl
+ do j=1,ny
+  do i=1,nx
+   om = max(0.,min(1.,(tabs(i,j,k)-tbgmin)*a_bg))
+   t(i,j,k) = t(i,j,k) + dtn * (dt_cu3D(i,j,k) - (om*fac_cond-(1.-om)*fac_sub)*dqn_ls3D(i,j,k))
+   q(i,j,k) = max(0.,q(i,j,k) + dtn * dq_cu3D(i,j,k))
+   qn(i,j,k) = max(0.,qn(i,j,k) + dtn * dqn_ls3D(i,j,k))
+   cld(i,j,k) = max(0.,min(1., cld(i,j,k) + dtn * dcld_ls3D(i,j,k)))
+   if(qn(i,j,k).eq.0) cld(i,j,k) = 0.
+   qv(i,j,k) = max(0.,q(i,j,k) - qn(i,j,k))
+   ! partition between liquid water and ice:
+   qcl(i,j,k) = qn(i,j,k)*om
+   qci(i,j,k) = qn(i,j,k)*(1.-om)
+   dudt(i,j,k,na) = dudt(i,j,k,na) + du_cu3D(i,j,k)
+   dvdt(i,j,k,na) = dvdt(i,j,k,na) + dv_cu3D(i,j,k)
+   tnudge(k) = tnudge(k) + dt_cu3D(i,j,k)
+   qnudge(k) = qnudge(k) + dq_cu3D(i,j,k)
+   unudge(k) = unudge(k) + du_cu3D(i,j,k)
+   vnudge(k) = vnudge(k) + dv_cu3D(i,j,k)
+  end do
+ end do
+end do    
+wd_cu(:,:) = wd_cu(:,:) + dtn*dwd_cu(:,:)
+
+tnudge(:) = tnudge(:) * factor
+qnudge(:) = qnudge(:) * factor
+unudge(:) = unudge(:) * factor
+vnudge(:) = vnudge(:) * factor
+
+coef = 1./86400.
+precinst(:,:) = precinst(:,:) + coef * (precip_cu(:,:)+precip_ls(:,:))
+coef1 = coef*dtn
+prec_xy(:,:) = prec_xy(:,:) + coef1 * (precip_cu(:,:)+precip_ls(:,:))
+preca_xy(:,:) = preca_xy(:,:) + coef1 * (precip_cu(:,:)+precip_ls(:,:))
+do j=1,ny
+  prectot = prectot + coef1 * wgty(j)*sum(precip_cu(:,j)+precip_ls(:,j))
+end do
+if(dostatis) then
+  precsfc(:,:) = precsfc(:,:) + coef1 * (precip_cu(:,:)+precip_ls(:,:))
+end if
+precflux(:nzm) = precflux(:nzm) + precflux_cu(:nzm)*coef*dtn/dz
+
+call t_stopf('cup_tend')
+
+end subroutine cup_tend
+!----------------------------------------------------------------------------------
+
+end module cup

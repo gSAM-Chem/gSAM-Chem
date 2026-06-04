@@ -1,0 +1,75 @@
+&SGS_TKE
+dosmagor = .false.
+/
+
+&MICRO_SAM1MOM
+ dowarmcloud = .true.
+ docloudfall = .true.
+ Nc_ocn = 50.
+ Nc_land = 50.
+ sigmag = 1.
+/
+
+
+ &PARAMETERS
+
+ caseid ='20x20x50',
+
+ nrestart = 0,
+
+ OCEAN = .true.,
+
+ dosgs		= .false.,
+ dodamping 	= .false.,
+ doupperbound  	= .false.,
+ docloud 	= .true.,
+ doprecip 	= .false.,
+ dolongwave	= .false.,
+ doradsimple    = .false., 
+ doshortwave	= .false.,
+ dosurface 	= .false.,
+ dolargescale 	= .false.,
+ doradforcing   = .false.,
+ dosfcforcing   = .false.,
+ docoriolis 	= .true.,
+ donudging_uv   = .false.,
+ donudging_tq   = .false.,
+
+ SFC_FLX_FXD    = .true.,
+ SFC_TAU_FXD    = .true.,
+
+ fcor = 0.376e-4,
+
+ dx = 	100.,
+ dy = 	10.,
+ dz =   10.
+ doconstdz = .true. 
+
+ perturb_type = -1,
+
+ dt = 	10.,
+
+ day0=0.,
+ nrad = 45,
+
+ nstop 	= 4800,
+ nprint  = 10,
+ nstat 	= 100,
+ nstatfrq= 10,
+
+doSAMconditionals = .fasle.
+dosatupdnconditionals = .false.
+
+ nsave2D	= 300,
+ nsave2Dstart	= 999991,
+ nsave2Dend	= 14400,
+ save2Dbin      = .true.
+
+ nsave3D	= 300,
+ nsave3Dstart	= 99918000,
+ nsave3Dend	= 999999999,
+ save3Dbin      = .true.
+
+/ 
+
+

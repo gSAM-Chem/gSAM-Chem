@@ -1,0 +1,86 @@
+&SGS_TKE
+ dosmagor = .false.
+/
+&SLM
+ landtype0 = 55
+/
+
+&PARAMETERS
+
+ caseid ='450x200x100_1m',
+
+ nadv_mom = 23
+ alpha_hybrid = 0.8
+
+ nrestart = 0,
+
+ nstop 	= 36000,
+ nprint = 100,
+ nstat 	= 6000,
+ nstatfrq= 30,
+
+! nrestart_skip = 359,
+
+ dx = 	1.,
+ dy = 	1.,
+
+ dt = 	0.05,
+ 
+ day0=0.,
+
+ dowally = .true.,
+
+ dobufferzonex = .true.,
+ bufferzonex = 0.1
+ dosmoke = .true.
+
+
+ doterrain = .true.
+ terrain_type = 21,
+
+ perturb_type = -1, 
+ tabs_s = 300.
+
+ OCEAN = .true.,
+
+ dosgs		= .true.,
+ dodamping 	= .false.,
+ doupperbound  	= .false.,
+ docloud 	= .false.,
+ doprecip 	= .false., 
+ dolongwave	= .false.,
+ doshortwave	= .false.,
+ dosurface 	= .false.,
+ dolargescale 	= .false.,
+ doradforcing   = .false.,
+ dosfcforcing   = .false.,
+ docoriolis 	= .false.,
+ donudging_uv   = .false.,
+ donudging_tq   = .false.,
+
+ tauls = 43200.,
+
+ SFC_FLX_FXD    = .false.,
+ SFC_TAU_FXD    = .false.,
+
+doSAMconditionals = .false.
+dosatupdnconditionals = .false.
+
+
+ nsave2D	= 1200,
+ nsave2Dstart	= 0,
+ nsave2Dend	= 999164000,
+ save2Dbin      = .false.
+ save2Dsep = .true.
+ save2Davg = .false.
+
+
+ nsave3D	= 1200,
+ nsave3Dstart	= 0,
+ nsave3Dend	= 999999999,
+ save3Dbin      = .false.
+
+/ 
+
+
+

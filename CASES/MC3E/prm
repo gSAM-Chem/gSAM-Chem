@@ -1,0 +1,70 @@
+&SGS_TKE
+ dosmagor	= .true.,
+/
+&PARAMETERS
+
+ nrestart = 0
+
+ caseid ='288x288x74_10s_1000m',
+
+ LAND = .true.,
+ LES_S = .false.
+
+ dosgs		= .true.,
+ dodamping 	= .true.,
+ doupperbound  	= .true.,
+ docloud 	= .true.,
+ doprecip 	= .true., 
+ dolongwave	= .true.,
+ doshortwave	= .true.,
+ dosurface 	= .true.,
+ dolargescale 	= .true.,
+ doradforcing   = .false.,
+ dosfcforcing   = .true.,
+ docoriolis 	= .false.,
+ donudging_uv   = .true.,
+ donudging_tq   = .false.,
+
+ SFC_FLX_FXD    = .true.,
+ SFC_TAU_FXD    = .false.,
+
+ tauls = 7200.,
+
+ dx = 	1000.,
+ dy = 	1000.,
+ dt = 	10.,
+
+ doisccp = .true.,
+
+ latitude0= 36.605,
+ longitude0=-97.485,
+
+ nrad = 60,
+
+ day0=112.00,
+
+ nstop 		= 388800,
+ nprint 	= 300,
+ nstat 		= 1080,
+ nstatfrq 	= 180,
+
+! doSAMconditionals = .true.
+! dosatupdnconditionals = .true.
+
+
+ nsave2D	= 1080,
+ nsave2Dstart	= 0,
+ nsave2Dend	= 999164000,
+ save2Dbin = .false.
+ save2Dsep = .true.
+ save2Davg = .false.
+
+ nsave3D	= 1080,
+ nsave3Dstart	= 0,
+ nsave3Dend	= 999164000,
+ save3Dbin = .false.
+
+/ 
+
+
+

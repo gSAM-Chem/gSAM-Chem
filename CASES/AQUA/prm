@@ -1,0 +1,158 @@
+&SGS_TKE
+ tk_factor = 0.001
+/
+
+&MICRO_SAM1MOM
+!  doKKauto = .true.
+!  qci0 = 2.e-5
+!  qcw0 = 0.25e-3
+!  icefall_fudge = 0.25
+  doeiscld = .true.
+/
+
+&MICRO_P3
+  doeiscld = .true.
+/
+&MICRO_M2005
+  doeiscld = .true.
+!  do_scale_dependence_of_autoconv = .true.
+/
+
+&PARAMETERS
+
+!caseid ='2048x512x36_FLAT_SAM1MOM'
+!caseid ='2048x512x36_300K_P3'
+!caseid ='2048x512x36_300K_SAM1MOM'
+!caseid ='2048x512x36_QOBS_P3'
+caseid ='2048x512x36_QOBS_SAM1MOM_noheap'
+
+nrestart = 0,
+
+nstop    = 3110400,
+nelapse  = 1296000,! SAM1MOM
+!nelapse  = 712800,  ! P3
+nprint   = 90,
+nstat    = 4320,
+nstatfrq = 24,
+
+dt = 20.,
+day0 = 0.,
+
+OCEAN = .true.,
+
+doglobal =.true.
+
+earth_factor = 1.
+
+!doradhomozonal = .true.
+
+doseawater = .true.
+
+!tabs_s = 300.
+ocean_type = 6
+tabs_s = 273.15
+delta_sst = 27.
+!shift_sst = 5.
+
+dolongwave      = .true.,
+doshortwave     = .true.,
+
+doperpetual = .true.,
+doseasons = .false.,
+doequinox = .true.
+!zenith_angle = 30.
+doradlat = .true.,
+doradlon = .true.,
+doradavg = .false.
+
+reado3 = .true.
+o3file = './GLOBAL_DATA/BIN_D/o3ape_128x64x59.bin'
+nrad = 45,
+
+gmg_precision = 1.e-6
+
+doimplicitdiff = .true.
+
+dodamping = .true.,
+dodamping_poles = .true.,
+dodamping_w = .true.,
+dodamping_u = .true.,
+damping_u_cu = 0.4
+damping_w_cu = 0.45
+
+
+gmg_precision = 1.e-6
+
+readlat = .true.
+latlonfile = './GRIDS/lat_512x2048'
+
+!perturb_type = 7,
+!perturb_type = -1,
+
+dodebug = .false.
+
+dodamping_w = .true.,
+dodamping_u = .true.,
+damping_u_cu = 0.4
+damping_w_cu = 0.45
+
+restart_sep = .true.,
+!nrestart_skip = 9,
+
+dofplane = .false.
+docoriolis = .true.,
+
+
+!dosolarconstant = .true.,
+!solar_constant = 551.58,
+!zenith_angle   = 42.05,
+
+dosgs           = .true.,
+dodamping       = .true.,
+doupperbound    = .false.,
+docloud         = .true.,
+doprecip        = .true.,
+dosurface       = .true.,
+dolargescale    = .false.,
+doradforcing    = .false.,
+dosfcforcing    = .false.,
+donudging_uv    = .false.,
+donudging_tq    = .false.,
+
+tauls = 86400.,
+
+SFC_FLX_FXD    = .false.,
+SFC_TAU_FXD    = .false.,
+
+doSAMconditionals = .false.
+dosatupdnconditionals = .false.
+
+nsave2D = 4320,
+nsave2Dstart    = 0,
+nsave2Dend      = 999999999,
+save2Dsep = .true.
+save2Davg = .true.
+
+nsave2DL = 4320,
+nsave2DLstart    = 999999999,
+nsave2DLend      = 999999999,
+save2DLsep = .true.
+save2DLavg = .true.
+
+nsave2DZ = 4320,
+nsave2DZstart    = 0,
+nsave2DZend      = 999999999,
+save2DZsep = .true.
+
+nsave3D = 1,
+nsave3Dstart    = 12959,
+nsave3Dend      = 12962,
+save3Dbin      = .false.
+
+nmovie       = 60,
+nmoviestart  = 99999990
+nmovieend    = 99960480
+
+/
+
+

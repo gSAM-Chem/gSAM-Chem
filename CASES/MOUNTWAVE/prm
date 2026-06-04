@@ -1,0 +1,99 @@
+&SGS_TKE
+ dosmagor	= .true.,
+/
+&PARAMETERS
+
+! caseid ='1024x1024x98_166.5m_5s_ridge_mom23_0.7_hyb200iter_z1',
+! caseid ='512x512x98_333m_5s_ridge_mom23_0.7_hyb200iter_z1_npress3_noterrep',
+ caseid ='512x512x98_333m_5s_ridge_mom23_0.7_npress3',
+! caseid ='512x512x120_333m_5s_circ_mom23_0.8_hyb200iter_z1',
+ 
+ doterrain = .true.,
+ terrain_type = 81, 
+
+ nrestart = 0,
+
+ dt = 	5.,
+ 
+ doterrhyb = .false.
+ doterrepair = .true.
+ npressure_iter = 3
+
+!nadv_mom = 23
+alpha_hybrid = 0.7
+
+ nstop 	= 1400,
+ nelapse = 1400 
+ nprint = 30,
+ nstat 	= 100,
+ nstatfrq= 1,
+
+! doglobal = .true.,
+! readlat = .true.
+! latlonfile = './GRIDS/lat_144'
+
+! dolatlon = .true.
+! dx = 166.5
+! dy = 166.5
+ dx = 333.33
+ dy = 333.33
+! dowally = .true.
+
+ dodamping 	= .true.,
+! dodamping_poles	= .true.,
+
+! doradlat = .true.
+! doradlon = .true.
+
+ perturb_type = -1, 
+! perturb_type = 11, 
+ earth_factor = 1.
+! earth_factor = 500.
+
+ gmg_precision = 1.e-6
+
+
+ dodamping_w = .false.
+! dodamping_u = .false.
+
+ OCEAN = .true.
+
+! terrain_type = 9, 
+ dobufferzonex = .true.,
+ bufferzonex = 0.1
+
+! nub = 0.5
+
+ dosgs		= .true.,
+ doupperbound  	= .false.,
+ docloud 	= .false.,
+ doprecip 	= .false., 
+ dolongwave	= .false.,
+ doshortwave	= .false.,
+ dosurface 	= .false.,
+ dolargescale 	= .false.,
+ doradforcing   = .false.,
+ dosfcforcing   = .false.,
+ docoriolis 	= .false.,
+ donudging_uv   = .false.,
+ donudging_tq   = .false.,
+
+ day0=0.,
+
+doSAMconditionals = .false.
+dosatupdnconditionals = .false.
+
+
+ nsave2D	= 200,
+ nsave2Dstart	= 0,
+ nsave2Dend	= 999164000,
+ save2Dsep = .true.
+
+ nsave3D	= 200,
+ nsave3Dstart	= 0,
+ nsave3Dend	= 999999999,
+
+/ 
+
+
+

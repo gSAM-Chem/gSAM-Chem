@@ -1,0 +1,139 @@
+&SGS_TKE
+  tk_factor = 0.001
+  doaddTKEdiss = .true.
+/
+
+&MICRO_SAM1MOM
+  icefall_fudge=0.8
+  doprecipdiss = .true.
+  donograupel = .true. ! no graupel, only snow
+  doeiscld = .true.
+  tprmin = 273.16    ! Minimum temperature for rain, K
+  tprmax = 278.16    ! Maximum temperature for snow+graupel, K
+/
+
+
+&PARAMETERS
+
+caseid ='128x128x83_100m_3s_NUDGEUVTQ'
+
+nrestart = 0,
+
+nstop    = 28800, ! 1 day
+nprint   = 60,
+nstat    = 200,
+nstatfrq = 10,
+
+dx = 100.
+dy = 100.
+
+dotc = .true.
+
+date0 = 20180709000000,
+
+doimplicitdiff = .true.
+
+dt = 3.0,
+
+dodamping = .true.,
+dodamping_w = .true.,
+dodamping_u = .true.,
+damping_u_cu = 0.25
+damping_w_cu = 0.3
+
+dosaferestart = .false.
+nrestart_steps = 7200
+restart_sep = .true.,
+
+dodebug = .false.
+
+doseawater = .true.
+
+OCEAN = .true.,
+
+donudging_uv = .true.
+donudging_w = .false.
+donudging_t = .true.
+donudging_q = .true.
+
+!perturb_type = -1,
+
+latitude0 = 40.
+longitude0 = 288.
+
+doseasons = .true.,
+dolongwave      = .true.,
+doshortwave     = .true.,
+doradavg = .false.
+nrad = 60,
+
+dodynamicocean = .false.,
+
+nxco2 = 1.,
+dosgs           = .true.,
+doupperbound    = .false.,
+docloud         = .true.,
+doprecip        = .true.,
+dosurface       = .true.,
+dolargescale    = .false.,
+doradforcing    = .false.,
+dosfcforcing    = .true.,
+
+tauls = 3600.,
+
+SFC_FLX_FXD    = .false.,
+SFC_TAU_FXD    = .false.,
+
+doisccp = .false.,
+
+doSAMconditionals = .false.
+dosatupdnconditionals = .false.
+
+nsave2D = 200,
+nsave2Dstart    = 9999990,
+nsave2Dend      = 999999999,
+save2Dsep = .true.
+save2Davg = .false.
+save2Drada = .false.
+snow2Dout = .true.
+
+nsave2DL = 200,
+nsave2DLstart    = 99999990,
+nsave2DLend      = 999999999,
+save2DLsep = .true.
+save2DLavg = .true.
+
+nsaveM = 400,
+nsaveMstart    = 99999999,
+nsaveMend      = 999999999,
+saveMsep = .true.
+saveMavg = .false.
+
+nsave2DZ = 400,
+nsave2DZstart    = 9999990,
+nsave2DZend      = 999999999,
+save2DZsep = .true.
+
+nsave3D = 400,
+nsave3Dstart    = 99999990,
+nsave3Dend      = 999999999,
+save3Dbin      = .false.
+nfiles3D = 16
+
+dostatcoars = .false.
+nstatcoars = 1,
+nstatcoarsstart    = 0,
+nstatcoarsend      = 999999999,
+
+nstatmom = 120,
+nstatmomstart    = 99999999,
+nstatmomend      = 999999999,
+savemomsep = .true.
+
+nmovie       = 60,
+nmoviestart  = 99999990
+nmovieend    = 99960480
+
+/
+
+

@@ -1,0 +1,131 @@
+; modle output:
+files = (/"../../OUT_2D/USA_3072x1536x72_2.5km_10s_APR11_2019-04-14-00-00-00_0000025920.2D_atm.nc"/)
+
+; ERA5 dataset
+fobs = addfile("/glade/campaign/collections/rda/data/d633000/e5.oper.an.pl/201904/e5.oper.an.pl.128_129_z.ll025sc.2019041400_2019041423.nc","r")
+
+f = addfiles(files,"r")
+nfiles = dimsizes(files)
+
+;--- Workstation
+wks = gsn_open_wks("ps","ps")
+
+;================ Map resources (ONLY mp*, gsn*) ================
+mpres = True
+mpres@gsnMaximize          = True
+mpres@mpOutlineOn          = True
+mpres@mpGeophysicalLineThicknessF = 1.5
+mpres@mpLimitMode          = "LatLon"
+
+; you'll fill these four after you read lat/lon the first time:
+; mpres@mpMinLatF   = ...
+; mpres@mpMaxLatF   = ...
+; mpres@mpMinLonF   = ...
+; mpres@mpMaxLonF   = ...
+; optional if using 0–360°: mpres@mpCenterLonF =  (mpres@mpMinLonF+mpres@mpMaxLonF)/2.
+
+;================ Contour resources (ONLY cn*, sf*, lb*, gsn*) ===
+cres = True
+cres@gsnDraw              = False
+cres@gsnFrame             = False
+cres@cnFillOn             = False
+cres@cnLinesOn            = True
+cres@cnLineThicknessF     = 2.0
+cres@cnInfoLabelOn        = False
+cres@lbLabelBarOn         = False
+cres@gsnAddCyclic         = False       ; limited domains / mixed grids
+
+; You’re plotting perturbations around ~0, so use symmetric levels:
+cres@cnLevelSelectionMode = "ManualLevels"
+cres@cnMinLevelValF       = -600.0
+cres@cnMaxLevelValF       =  600.0
+cres@cnLevelSpacingF      =   40.0
+
+;==================== Read data (your existing code) ============
+; ... fobs, f, etc.
+
+;-------------- OBS: perturbation + (ensure coords present) -----
+fldobs = fobs->Z(0,{500},:,:)/9.797
+latobs = fobs->latitude
+lonobs = fobs->longitude      ; ERA5 is usually -180..180 already
+; area-weighted mean over lon, then lat:
+fldobs1 = dim_avg_Wrap(fldobs)
+wobs    = cos(latobs*0.0174533)
+w2Dobs  = conform(fldobs1,wobs,0)
+fldobs_mean = dim_avg_wgt_n(fldobs1,w2Dobs,0,0)
+fldobs = fldobs - fldobs_mean
+
+;==================== Loop over model files =====================
+files = (/"../../OUT_2D/USA_3072x1536x72_2.5km_10s_APR11_2019-04-14-00-00-00_0000025920.2D_atm.nc"/)
+f = addfiles(files,"r")
+nfiles = dimsizes(files)
+
+colors = (/"black","red","blue","green4","purple"/)
+
+plot = new(nfiles+1,graphic)
+
+do i=0,nfiles-1
+  fld = f[i]->PHI500(0,:,:)
+  lat = f[i]->lat
+  lon = f[i]->lon    ; likely 0..360 in your model
+
+  ; set map bounds ONCE from the first model file
+  if (i.eq.0) then
+    ; If lon is 0..360, get a clean window crossing the dateline if needed:
+    lonmin = min(lon)
+    lonmax = max(lon)
+
+    mpres@mpMinLatF = min(lat)
+    mpres@mpMaxLatF = max(lat)
+
+    if (max(lon) .gt. 180.) then
+      ; keep 0–360, but set explicit center to suppress warning:
+      mpres@mpMinLonF   = lonmin
+      mpres@mpMaxLonF   = lonmax
+      mpres@mpCenterLonF= 0.5*(lonmin+lonmax)
+    else
+      ; already -180..180
+      mpres@mpMinLonF   = lonmin
+      mpres@mpMaxLonF   = lonmax
+    end if
+
+    base = gsn_csm_map(wks, mpres)
+
+    ;--- draw OBS isolines first (use obs coords if not attached):
+    obsres = cres
+    obsres@cnLineColor = colors(0)
+    ; If fldobs lacks attached coords, uncomment:
+    ; obsres@sfYArray = latobs
+    ; obsres@sfXArray = lonobs
+    plot(0) = gsn_csm_contour(wks, fldobs, obsres)
+    overlay(base, plot(0))
+  end if
+
+  ; perturbation for model field
+  fld1 = dim_avg_Wrap(fld)
+  w    = cos(lat*0.0174533)
+  w2D  = conform(fld1,w,0)
+  fld_mean = dim_avg_wgt_n(fld1,w2D,0,0)
+  fld = fld - fld_mean
+
+  ; model contour (supply coords if not attached to variable):
+  resM = cres
+  resM@cnLineColor = colors(i+1)
+  ; If PHI500 isn’t carrying coords:
+  ; resM@sfYArray = lat
+  ; resM@sfXArray = lon
+
+  plot(i+1) = gsn_csm_contour(wks, fld, resM)
+  overlay(base, plot(i+1))
+
+  delete(fld)
+  delete(fld1)
+  delete(lat)
+  delete(lon)
+  delete(w)
+  delete(w2D)
+end do
+
+draw(base)
+frame(wks)
+

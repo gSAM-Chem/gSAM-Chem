@@ -1,0 +1,69 @@
+module chemistry_params
+
+   use cloudchem_Parameters, only: NVAR, NSPEC, NFIX
+   use cloudchem_Monitor, only: SPC_NAMES
+
+   implicit none
+
+   real :: p0 = 1013.25    ! Pressure of 1atm in hPa
+   real :: rhol = 1000.    ! Density of water, in kg/m^3
+   
+   ! Used in heterogeneous chemistry
+   real, public :: avgd = 6.022e23                 ! Avogadro's number
+   real, public :: MW_air = 28.97                  ! Molar mass of dry air [g/mol]
+   real, public :: rho_aerosol = 1777.             ! kg/m^3 aerosol density, set for ammonium sulfate when initializing aerosol distribution
+   real, public :: sigma_accum = 2.04              ! stdev of accumulation mode
+
+   real :: soil_wetness = 0.
+
+   logical :: do_only_tropospheric_chemistry = .true.
+   logical :: do_transport_loss = .false.
+
+   ! Only relevant if OH is fixed!
+   logical :: do_OH_diurnal = .true.
+   real :: OH_night = 1.e5
+   real :: OH_day_peak = 5.e6
+
+   ! Dry Deposition
+   character(len=15), dimension(NSPEC) :: dry_deposition_species
+   real*8, dimension(NSPEC) :: dry_deposition_velocities
+
+   ! Wet Deposition
+   logical :: do_convective_scavenging = .true.
+   logical :: do_rainout = .true.
+   logical :: do_washout = .true.
+   character(len=15), dimension(NSPEC) :: wet_deposition_species
+   real*8, dimension(NSPEC) :: k0_constants
+   real*8, dimension(NSPEC) :: cr_constants
+   integer :: wet_deposition_time_step
+
+   ! Surface Fluxes
+   logical :: do_megan_isoprene = .true.
+   logical :: do_surface_Isoprene_diurnal = .false.
+   logical :: do_bdsnp_no = .true.
+
+   ! Lightning Switches
+   logical :: do_CTG_lightning = .false.
+   logical :: do_IC_lightning = .false.
+
+   logical :: IC_decaria = .false.
+   logical :: CTG_decaria_reflectivity = .false.
+   logical :: CTG_price_and_rind = .false.
+
+   ! Heterogeneous Chemistry
+   logical :: do_iepox_droplet_chem = .false., do_iepox_aero_chem = .false., hi_org = .true.
+
+   real :: pHdrop = 5.
+   real :: pHaero = 4.
+
+   ! Output Switches
+   logical, dimension(NVAR), public :: flag_gchemvar_out3D  ! which chem array to output
+
+   ! Define namelist variables
+   character(len=15), dimension(NSPEC) :: gas_init_name  ! array of desired names
+                                       !            for nonzero init
+   real*8, dimension(NSPEC) :: gas_init_value      ! array of init values
+                                               ! for corresponding gas_init_name
+   character(len=15), dimension(NVAR) :: gas_out3D_name  ! array of desired gas names
+   
+end module chemistry_params

@@ -1,0 +1,20 @@
+#!/bin/csh
+#
+# PBS script
+#
+#SBATCH -A UNSB0021        
+#SBATCH -n 24
+#SBATCH --ntasks-per-node=24
+#SBATCH --mem=400G
+#SBATCH -t 12:00:00
+#SBATCH -p dav
+
+### Set TMPDIR as recommended
+setenv TMPDIR /glade/scratch/marat/temp
+mkdir -p $TMPDIR
+
+#csh com3D2nc_all_parallel_HS94.csh
+csh com3D2nc_all_parallel.csh
+#csh mv2camp_all_parallel.csh
+#csh com3D2nc_all_parallel_extract.csh
+#csh com3D2nc_all_parallel_tend.csh

@@ -1,0 +1,107 @@
+&SGS_TKE
+dosmagor = .true.
+tk_factor = 0.001
+/
+
+&MICRO_SAM1MOM
+!  icefall_fudge=0.8
+!  qci0 = 2.e-5
+!  doeiscld = .true.
+!  doKKauto = .true.
+!  do_scale_dependence_of_autoconv = .true.
+!  Nc_ocn = 100.
+/
+
+&MICRO_M2005
+! do_scale_dependence_of_autoconv = .true.
+! Nc0 = 50.
+!  doeiscld = .true.
+/
+
+&MICRO_P3
+!  doeiscld = .true.
+/
+
+
+&PARAMETERS
+
+caseid ='128x128x72_RRTM_P3',
+
+nrestart = 0,
+
+doimplicitdiff = .true.
+
+OCEAN = .true.,
+doseawater = .true.,
+
+dx = 	4000.,
+dy = 	4000.,
+dt = 	10.,
+
+!nadv_mom = 23
+!alpha_hybrid = 0.8
+
+day0=285.,
+
+nrad = 90,
+doseasons = .true.,
+
+nstop 	= 216000,
+!nstop 	= 786240,
+nprint 	= 90,
+nstat 	= 1080,
+nstatfrq= 96,
+
+nrestart_steps = 86400
+
+!dodamping_w = .true.,
+!dodamping_u = .true.,
+!damping_u_cu = 0.25
+!damping_w_cu = 0.5
+
+dosgs		= .true.,
+dodamping 	= .true.,
+doupperbound  	= .true.,
+docloud 	= .true.,
+doprecip 	= .true., 
+dolongwave	= .true.,
+doshortwave	= .true.,
+dosurface 	= .true.,
+dolargescale 	= .true.,
+doradforcing    = .false.,
+dosfcforcing    = .true.,
+docoriolis 	= .false.,
+donudging_uv    = .true.,
+donudging_tq    = .false.,
+
+!doisccp = .true.,
+!domodis = .true.,
+!domisr = .true.,
+
+tauls = 7200.,
+
+SFC_FLX_FXD    = .false.,
+SFC_TAU_FXD    = .false.,
+
+longitude0 = 76.5,
+latitude0 = 3.,
+
+doSAMconditionals = .false.
+dosatupdnconditionals = .false.
+
+
+nsave2D	= 4320,
+nsave2Dstart	= 999990, 
+nsave2Dend	= 999164000,
+save2Davg = .false.
+save2Dsep = .true.
+
+nsave3D	= 4320,
+nsave3Dstart	= 9999990,
+nsave3Dend	= 999999999,
+save3Dbin      = .false.
+
+/ 
+
+
+

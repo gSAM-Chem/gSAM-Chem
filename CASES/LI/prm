@@ -1,0 +1,210 @@
+&SGS_TKE
+  tk_factor = 0.001
+  doaddTKEdiss = .true.
+  dosmagor = .false.
+/
+
+&MICRO_SAM1MOM
+  icefall_fudge=0.8
+  doprecipdiss = .true.
+  donograupel = .true. ! no graupel, only snow
+  doeiscld = .true.
+  tprmin = 273.16    ! Minimum temperature for rain, K
+  tprmax = 278.16    ! Maximum temperature for snow+graupel, K
+/
+
+&SLM
+readinitsoil = .true.
+readland = .true.
+readsoil = .true.
+
+dorunoff = .true.
+
+soilinitfile = './GLOBAL_DATA/BIN_D/soil_init_2025090309_3456x3456_LI_era5.bin'
+
+soilfile = './GLOBAL_DATA/BIN_D/soil_3456x3456_LI.bin'
+landtypefile = './GLOBAL_DATA/BIN_D/landtype_3456x3456_LI.bin'
+LAIfile = './GLOBAL_DATA/BIN_D/lai_3456x3456_LI.bin'
+/
+
+
+&PARAMETERS
+
+caseid ='3456x3456x83_100m_3s_Sep03_SPNUDGE013610_TR_TKE'
+
+nrestart = 0,
+
+nstop    = 28800, ! 1 day
+nprint   = 60,
+nstat    = 200,
+nstatfrq = 10,
+
+gmg_precision = 1.e-5
+
+dolatlon = .true.
+doregion = .true.
+donudge3D = .true.
+
+dotc = .true.
+
+date0 = 20250903090000,
+
+dodatefilename = .true.
+
+readlatlon = .true.
+latlonfile = './GLOBAL_DATA/BIN_D/latlon_3456x3456_LI.txt'
+
+dobufferzonex = .true.,
+dobufferzoney = .true.,
+bufferzonex = 0.01
+bufferzoney = 0.01
+
+dofcast = .false.
+dofcast_ice = .false.
+
+doimplicitdiff = .true.
+
+dt = 3.0,
+
+dotracers = .true.
+tracer_source_type = 100
+dopointsource = .true.
+pointsource_start_step = 721
+
+
+dodamping = .true.,
+dodamping_w = .true.,
+dodamping_u = .true.,
+damping_u_cu = 0.25
+damping_w_cu = 0.3
+
+dosaferestart = .false.
+nrestart_steps = 7200
+restart_sep = .true.,
+
+dodebug = .false.
+
+doterrain= .true.
+doseawater = .true.
+
+ISLAND = .true.,
+readinit = .true.
+readsst = .true.
+readlandmask = .true.
+readterr = .true.
+reado3 = .true.
+
+initfile = './GLOBAL_DATA/BIN_D/init_era5_2025090309_LI.bin'
+
+sstfile = './GLOBAL_DATA/BIN_D/sst_2025090309-2025090410_3456x3456_LI_era5.bin'
+
+landmaskfile = './GLOBAL_DATA/BIN_D/landmask_3456x3456_LI.bin'
+terrainfile = './GLOBAL_DATA/BIN_D/terrain_3456x3456_LI.bin'
+o3file = './GLOBAL_DATA/BIN_D/ozone_era5_monthly_202508-202510_LI.bin'
+
+dospectralnudging = .true.
+nx_spectral = 36
+ny_spectral = 36
+nstep_spectral = 10
+
+donudging_uv = .true.
+donudging_w = .false.
+donudging_t = .false.
+donudging_q = .false.
+
+nudge3D_dir = '/glade/derecho/scratch/marat/NUDGE'
+nudge3D_file = '/glade/derecho/scratch/marat/NUDGE/nudge_era5_2025090309-2025090410_LI_FILELIST.ascii'
+
+!nudge3Dstep_start = 1
+!nudge3Dstep_end = 4320
+
+!nudge3D_tau = 21600.
+nudge3D_tau = 3600.
+!nudge3D_tau = 86400.
+
+nens = 0
+
+!perturb_type = -1,
+
+dofplane = .false.
+docoriolis = .true.,
+docoriolisz = .true.,
+
+doseasons = .true.,
+dolongwave      = .true.,
+doshortwave     = .true.,
+doradlat = .true.,
+doradlon = .true.,
+doradavg = .false.
+nrad = 60,
+
+dodynamicocean = .false.,
+
+nxco2 = 1.,
+dosgs           = .true.,
+doupperbound    = .false.,
+docloud         = .true.,
+doprecip        = .true.,
+dosurface       = .true.,
+dolargescale    = .false.,
+doradforcing    = .false.,
+dosfcforcing    = .false.,
+
+tauls = 86400.,
+
+SFC_FLX_FXD    = .false.,
+SFC_TAU_FXD    = .false.,
+
+doisccp = .false.,
+
+doSAMconditionals = .false.
+dosatupdnconditionals = .false.
+
+nsave2D = 200,
+nsave2Dstart    = 0,
+nsave2Dend      = 999999999,
+save2Dsep = .true.
+save2Davg = .false.
+save2Drada = .false.
+snow2Dout = .true.
+
+nsave2DL = 200,
+nsave2DLstart    = 0,
+nsave2DLend      = 999999999,
+save2DLsep = .true.
+save2DLavg = .true.
+
+nsaveM = 400,
+nsaveMstart    = 99999999,
+nsaveMend      = 999999999,
+saveMsep = .true.
+saveMavg = .false.
+
+nsave2DZ = 400,
+nsave2DZstart    = 9999990,
+nsave2DZend      = 999999999,
+save2DZsep = .true.
+
+nsave3D = 400,
+nsave3Dstart    = 0,
+nsave3Dend      = 999999999,
+save3Dbin      = .false.
+nfiles3D = 16
+
+dostatcoars = .false.
+nstatcoars = 1,
+nstatcoarsstart    = 0,
+nstatcoarsend      = 999999999,
+
+nstatmom = 120,
+nstatmomstart    = 99999999,
+nstatmomend      = 999999999,
+savemomsep = .true.
+
+nmovie       = 60,
+nmoviestart  = 99999990
+nmovieend    = 99960480
+
+/
+
+

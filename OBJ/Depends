@@ -1,0 +1,276 @@
+MISR_simulator.o : MISR_simulator.f  
+abcoefs.o : abcoefs.f90 grid.o 
+adamsA.o : adamsA.f90 grid.o vars.o params.o terrain.o 
+adamsB.o : adamsB.f90 grid.o vars.o terrain.o params.o 
+advect23_mom_xy.o : advect23_mom_xy.f90 vars.o terrain.o params.o 
+advect23_mom_z.o : advect23_mom_z.f90 params.o terrain.o vars.o 
+advect2_mom_xy.o : advect2_mom_xy.f90 vars.o params.o 
+advect2_mom_z.o : advect2_mom_z.f90 vars.o params.o terrain.o stat_coars.o 
+advect_all_scalars.o : advect_all_scalars.f90 vars.o microphysics.o chem_aerosol.o terrain.o params.o tracers.o chem_aqueous.o chemistry.o sgs.o stat_coars.o chemistry_params.o 
+advect_mom.o : advect_mom.f90 params.o check_energy.o vars.o check_mom.o 
+advect_scalar.o : advect_scalar.f90 params.o grid.o vars.o 
+advect_scalar2D.o : advect_scalar2D.f90 grid.o 
+advect_scalar3D.o : advect_scalar3D.f90 terrain.o grid.o vars.o 
+advect_scalar3D_dble.o : advect_scalar3D_dble.f90 vars.o grid.o terrain.o 
+advect_scalar3D_tracer.o : advect_scalar3D_tracer.f90 grid.o terrain.o 
+advection.o : advection.f90  
+atmosphere.o : atmosphere.f90  
+bound_exchange.o : bound_exchange.f90 grid.o 
+bound_uv.o : bound_uv.f90 vars.o 
+boundaries.o : boundaries.f90 vars.o chem_aerosol.o microphysics.o sgs.o chemistry_params.o tracers.o chemistry.o chem_aqueous.o params.o 
+buildings.o : buildings.f90 grid.o 
+buildings_dummy.o : buildings_dummy.f90  
+buoyancy.o : buoyancy.f90 params.o terrain.o check_energy.o vars.o 
+cam_rad_parameterizations.o : cam_rad_parameterizations.f90 slm_params.o parkind.o shr_orb_mod.o 
+cape_cin.o : cape_cin.f90 grid.o terrain.o vars.o 
+check_div.o : check_div.f90 grid.o vars.o 
+check_energy.o : check_energy.f90 params.o vars.o 
+check_mom.o : check_mom.f90 terrain.o params.o vars.o 
+chem_aerosol.o : chem_aerosol.f90  
+chem_aqueous.o : chem_aqueous.f90  
+chemistry.o : chemistry.f90 cloudchem_Global.o rad.o vars.o cloudchem_Rates.o cloudchem_Function.o cloudchem_Parameters.o deposition.o grid.o hbuffer.o params.o emissions.o chem_aqueous.o cloudchem_Monitor.o wet_deposition.o cloudchem_Integrator.o chem_aerosol.o chemistry_params.o 
+chemistry_params.o : chemistry_params.f90 cloudchem_Parameters.o cloudchem_Monitor.o 
+cldefrint.o : cldefrint.f90 grid.o parkind.o cam_rad_parameterizations.o 
+cloud_fall.o : cloud_fall.f90  
+cloudchem_Function.o : cloudchem_Function.F90 cloudchem_Parameters.o 
+cloudchem_Global.o : cloudchem_Global.F90 cloudchem_Parameters.o 
+cloudchem_Initialize.o : cloudchem_Initialize.F90 cloudchem_Global.o cloudchem_Parameters.o 
+cloudchem_Integrator.o : cloudchem_Integrator.F90 cloudchem_Rates.o cloudchem_Global.o cloudchem_LinearAlgebra.o cloudchem_Parameters.o cloudchem_Function.o cloudchem_Jacobian.o cloudchem_Util.o 
+cloudchem_Jacobian.o : cloudchem_Jacobian.F90 cloudchem_JacobianSP.o cloudchem_Parameters.o 
+cloudchem_JacobianSP.o : cloudchem_JacobianSP.F90  
+cloudchem_LinearAlgebra.o : cloudchem_LinearAlgebra.F90 cloudchem_JacobianSP.o cloudchem_Parameters.o 
+cloudchem_Model.o : cloudchem_Model.F90 cloudchem_Monitor.o cloudchem_Util.o cloudchem_Precision.o cloudchem_Jacobian.o cloudchem_Integrator.o cloudchem_LinearAlgebra.o cloudchem_Parameters.o cloudchem_Function.o cloudchem_Rates.o cloudchem_Global.o 
+cloudchem_Monitor.o : cloudchem_Monitor.F90  
+cloudchem_Parameters.o : cloudchem_Parameters.F90 cloudchem_Precision.o 
+cloudchem_Precision.o : cloudchem_Precision.F90  
+cloudchem_Rates.o : cloudchem_Rates.F90 cloudchem_Global.o cloudchem_Parameters.o 
+cloudchem_Util.o : cloudchem_Util.F90 cloudchem_Global.o cloudchem_Parameters.o cloudchem_Monitor.o 
+clouds_sub_ls_v1.o : clouds_sub_ls_v1.f  
+compress2D.o : compress2D.f90 mpi_stuff.o grid.o pnetcdf_stuff.o 
+compress2DZ.o : compress2DZ.f90 pnetcdf_stuff.o grid.o 
+compress3D.o : compress3D.f90 grid.o pnetcdf_stuff.o 
+consts.o : consts.f90  
+convect.o : convect.f  
+coriolis.o : coriolis.f90 params.o vars.o check_energy.o 
+cup.o : cup.f90 vars.o mpi_stuff.o grid.o microphysics.o consts.o params.o terrain.o 
+damping.o : damping.f90 check_energy.o microphysics.o terrain.o params.o vars.o 
+date.o : date.f90  
+deposition.o : deposition.f90 cloudchem_Monitor.o chemistry_params.o cloudchem_Parameters.o grid.o 
+diagnose.o : diagnose.f90 sgs.o tracers.o vars.o params.o terrain.o microphysics.o 
+diffuse_damping_mom_z.o : diffuse_damping_mom_z.f90 check_energy.o sgs.o vars.o terrain.o params.o 
+diffuse_mom.o : diffuse_mom.f90 sgs.o check_energy.o params.o vars.o 
+diffuse_mom2D.o : diffuse_mom2D.f90 sgs.o vars.o params.o terrain.o 
+diffuse_mom3D.o : diffuse_mom3D.f90 sgs.o stat_coars.o check_energy.o microphysics.o params.o terrain.o vars.o 
+diffuse_mom3D_DNS.o : diffuse_mom3D_DNS.f90 params.o terrain.o vars.o sgs.o 
+diffuse_mom3D_TERR.o : diffuse_mom3D_TERR.f90 microphysics.o params.o terrain.o vars.o sgs.o stat_coars.o check_energy.o 
+diffuse_scalar.o : diffuse_scalar.f90 grid.o params.o vars.o sgs.o 
+diffuse_scalar2D.o : diffuse_scalar2D.f90 params.o terrain.o grid.o 
+diffuse_scalar3D.o : diffuse_scalar3D.f90 sgs.o vars.o params.o grid.o 
+diffuse_scalar3D_DNS.o : diffuse_scalar3D_DNS.f90 sgs.o terrain.o params.o grid.o vars.o 
+diffuse_scalar3D_TERR.o : diffuse_scalar3D_TERR.f90 terrain.o params.o grid.o vars.o sgs.o 
+diffuse_scalar_z.o : diffuse_scalar_z.f90 grid.o terrain.o params.o 
+dodebug.o : dodebug.f90 vars.o 
+domain.o : domain.f90  
+dyn_ocean.o : dyn_ocean.f90 slm_vars.o rad.o vars.o params.o 
+emissions.o : emissions.f90 cloudchem_Parameters.o vars.o rad.o params.o grid.o chemistry_params.o 
+fft.o : fft.F90  
+forcing.o : forcing.f90 slm_vars.o vars.o microphysics.o params.o terrain.o tracers.o 
+gmg.o : gmg.f90 gmg_data.o gmg_discr.o gmg_kernel.o gmg_utils.o 
+gmg_data.o : gmg_data.f90  
+gmg_discr.o : gmg_discr.f90 gmg_data.o 
+gmg_kernel.o : gmg_kernel.f90 gmg_utils.o gmg_data.o gmg_utils.o gmg_kernel.inc gmg_data.o
+gmg_utils.o : gmg_utils.f90  gmg_utils.inc
+grid.o : grid.f90 advection.o domain.o mpi_stuff.o 
+hbuf_chem_init.o : hbuf_chem_init.f90 chemistry.o 
+hbuf_conditionals_init.o : hbuf_conditionals_init.f90 hbuffer.o vars.o 
+hbuf_micro_init.o : hbuf_micro_init.f90 microphysics.o 
+hbuf_sgs_init.o : hbuf_sgs_init.f90 sgs.o 
+hbuffer.o : hbuffer.f90 buildings.o tracers.o vars.o grid.o params.o fppmacros
+header.o : header.f90 grid.o 
+heat_index.o : heat_index.f90  
+het_chem_driver.o : het_chem_driver.f90 chemistry_params.o chem_aerosol.o cloudchem_Parameters.o vars.o chem_aqueous.o microphysics.o grid.o 
+icarus.o : icarus.f  
+ice_fall.o : ice_fall.f90  
+init.o : init.f90 tracers.o vars.o 
+instrument_diagnostics.o : instrument_diagnostics.f90 modis_simulator.o rad.o vars.o microphysics.o grid.o params.o 
+kurant.o : kurant.f90 vars.o params.o sgs.o 
+m2005_cloud_optics.o : m2005_cloud_optics.f90 parrrtm.o terrain.o grid.o microphysics.o parkind.o parrrsw.o micro_params.o 
+main.o : main.f90 cup.o movies.o sgs.o tracers.o chemistry.o vars.o hbuffer.o terrain.o microphysics.o 
+mcica_random_numbers.o : mcica_random_numbers.f90 parkind.o 
+mcica_subcol_gen_lw.o : mcica_subcol_gen_lw.f90 rrlw_con.o mcica_random_numbers.o parkind.o parrrtm.o rrlw_wvn.o rrlw_vsn.o 
+mcica_subcol_gen_sw.o : mcica_subcol_gen_sw.f90 rrsw_wvn.o rrsw_vsn.o mcica_random_numbers.o parkind.o parrrsw.o rrsw_con.o 
+micro_params.o : micro_params.f90  
+microphysics.o : microphysics.f90 micro_params.o vars.o mpi_stuff.o module_mp_graupel.o hbuffer.o params.o terrain.o grid.o 
+modis_simulator.o : modis_simulator.f90  
+module_mp_graupel.o : module_mp_graupel.f90 micro_params.o params.o grid.o 
+movies.o : movies.f90 vars.o grid.o params.o 
+mpi_stuff.o : mpi_stuff.f90  
+nondivergent.o : nondivergent.f90 vars.o params.o terrain.o grid.o 
+nudging.o : nudging.f90 sgs.o stat_coars.o tracers.o check_energy.o microphysics.o params.o terrain.o vars.o 
+oceflx.o : oceflx.f90 params.o grid.o 
+ocn.o : ocn.F90  
+ocn_initialize.o : ocn_initialize.f90  
+ocn_stepout.o : ocn_stepout.f90  
+params.o : params.f90 consts.o 
+parkind.o : parkind.f90  
+parrrsw.o : parrrsw.f90 parkind.o 
+parrrtm.o : parrrtm.f90 parkind.o 
+pnetcdf_stuff.o : pnetcdf_stuff.f90 grid.o params.o vars.o fppmacros
+press_grad.o : press_grad.f90 params.o vars.o 
+press_rhs.o : press_rhs.f90 vars.o terrain.o params.o 
+pressure.o : pressure.f90 check_energy.o vars.o params.o terrain.o 
+pressure_big.o : pressure_big.f90 mpi_stuff.o vars.o params.o 
+pressure_gmg.o : pressure_gmg.f90 mpi_stuff.o vars.o params.o gmg.o 
+pressure_orig.o : pressure_orig.f90 params.o vars.o 
+pressz.o : pressz.f90 params.o vars.o 
+printout.o : printout.f90 buildings.o tracers.o vars.o params.o 
+rad.o : rad.f90 rrtmg_lw_cldprop.o parrrsw.o mcica_subcol_gen_lw.o mcica_subcol_gen_sw.o vars.o rrtmg_lw_rad_nomcica.o slm_vars.o shr_orb_mod.o consts.o parrrtm.o microphysics.o rrtmg_sw_cldprop.o rrtmg_sw_rad_nomcica.o parkind.o rrtmg_lw_rad.o terrain.o m2005_cloud_optics.o params.o rrtmg_lw_init.o grid.o cam_rad_parameterizations.o rrtmg_sw_init.o thompson_cloud_optics.o rrlw_ncpar.o rrtmg_sw_rad.o 
+rad_full.o : rad_full.f90 rad.o 
+rad_simple.o : rad_simple.f90 params.o grid.o vars.o rad.o 
+rad_simple_smoke.o : rad_simple_smoke.f90 params.o vars.o rad.o 
+rad_utils.o : rad_utils.f90  
+radiation.o : radiation.f90 grid.o params.o 
+radiative_fluxes.o : radiative_fluxes.f90 rad.o slm_vars.o params.o 
+random.o : random.f90  
+read_field3D.o : read_field3D.f90 grid.o params.o fppmacros
+read_nudging.o : read_nudging.f90 terrain.o params.o grid.o vars.o consts.o fppmacros
+readiopdata.o : readiopdata.f90 vars.o grid.o params.o 
+readlevels.o : readlevels.f90 params.o grid.o fppmacros
+readsurface.o : readsurface.f90 params.o grid.o fppmacros
+resistances.o : resistances.f90 rad.o slm_vars.o 
+restart.o : restart.f90 chemistry.o sgs.o chem_aerosol.o cup.o buildings.o movies.o terrain.o params.o chem_aqueous.o tracers.o microphysics.o vars.o fppmacros
+rrlw_cld.o : rrlw_cld.f90 parkind.o 
+rrlw_con.o : rrlw_con.f90 parkind.o 
+rrlw_kg01.o : rrlw_kg01.f90 parkind.o 
+rrlw_kg02.o : rrlw_kg02.f90 parkind.o 
+rrlw_kg03.o : rrlw_kg03.f90 parkind.o 
+rrlw_kg04.o : rrlw_kg04.f90 parkind.o 
+rrlw_kg05.o : rrlw_kg05.f90 parkind.o 
+rrlw_kg06.o : rrlw_kg06.f90 parkind.o 
+rrlw_kg07.o : rrlw_kg07.f90 parkind.o 
+rrlw_kg08.o : rrlw_kg08.f90 parkind.o 
+rrlw_kg09.o : rrlw_kg09.f90 parkind.o 
+rrlw_kg10.o : rrlw_kg10.f90 parkind.o 
+rrlw_kg11.o : rrlw_kg11.f90 parkind.o 
+rrlw_kg12.o : rrlw_kg12.f90 parkind.o 
+rrlw_kg13.o : rrlw_kg13.f90 parkind.o 
+rrlw_kg14.o : rrlw_kg14.f90 parkind.o 
+rrlw_kg15.o : rrlw_kg15.f90 parkind.o 
+rrlw_kg16.o : rrlw_kg16.f90 parkind.o 
+rrlw_ncpar.o : rrlw_ncpar.f90 parkind.o 
+rrlw_ref.o : rrlw_ref.f90 parkind.o 
+rrlw_tbl.o : rrlw_tbl.f90 parkind.o 
+rrlw_vsn.o : rrlw_vsn.f90  
+rrlw_wvn.o : rrlw_wvn.f90 parrrtm.o parkind.o 
+rrsw_aer.o : rrsw_aer.f90 parkind.o parrrsw.o 
+rrsw_cld.o : rrsw_cld.f90 parkind.o 
+rrsw_con.o : rrsw_con.f90 parkind.o 
+rrsw_kg16.o : rrsw_kg16.f90 parkind.o parrrsw.o 
+rrsw_kg17.o : rrsw_kg17.f90 parkind.o parrrsw.o 
+rrsw_kg18.o : rrsw_kg18.f90 parkind.o parrrsw.o 
+rrsw_kg19.o : rrsw_kg19.f90 parkind.o parrrsw.o 
+rrsw_kg20.o : rrsw_kg20.f90 parrrsw.o parkind.o 
+rrsw_kg21.o : rrsw_kg21.f90 parrrsw.o parkind.o 
+rrsw_kg22.o : rrsw_kg22.f90 parkind.o parrrsw.o 
+rrsw_kg23.o : rrsw_kg23.f90 parrrsw.o parkind.o 
+rrsw_kg24.o : rrsw_kg24.f90 parrrsw.o parkind.o 
+rrsw_kg25.o : rrsw_kg25.f90 parrrsw.o parkind.o 
+rrsw_kg26.o : rrsw_kg26.f90 parkind.o parrrsw.o 
+rrsw_kg27.o : rrsw_kg27.f90 parrrsw.o parkind.o 
+rrsw_kg28.o : rrsw_kg28.f90 parrrsw.o parkind.o 
+rrsw_kg29.o : rrsw_kg29.f90 parrrsw.o parkind.o 
+rrsw_ncpar.o : rrsw_ncpar.f90 parkind.o 
+rrsw_ref.o : rrsw_ref.f90 parkind.o 
+rrsw_tbl.o : rrsw_tbl.f90 parkind.o 
+rrsw_vsn.o : rrsw_vsn.f90  
+rrsw_wvn.o : rrsw_wvn.f90 parrrsw.o parkind.o 
+rrtmg_lw_cldprmc.o : rrtmg_lw_cldprmc.f90 parrrtm.o rrlw_cld.o rrlw_vsn.o rrlw_wvn.o parkind.o 
+rrtmg_lw_cldprop.o : rrtmg_lw_cldprop.f90 parkind.o rrlw_vsn.o rrlw_cld.o parrrtm.o 
+rrtmg_lw_init.o : rrtmg_lw_init.f90 rrlw_kg12.o parrrtm.o rrlw_cld.o rrlw_kg15.o rrlw_vsn.o rrlw_kg09.o rrlw_kg11.o rrtmg_lw_setcoef.o rrlw_kg07.o rrlw_kg02.o rrlw_kg05.o rrlw_kg08.o rrlw_kg01.o rrlw_kg04.o rrlw_wvn.o parkind.o rrlw_kg13.o rrlw_kg06.o rrlw_tbl.o rrlw_kg03.o rrlw_kg16.o rrlw_kg14.o rrlw_con.o rrlw_kg10.o 
+rrtmg_lw_rad.o : rrtmg_lw_rad.f90 rrlw_con.o parkind.o rrlw_wvn.o rrtmg_lw_rtrnmc.o rrtmg_lw_setcoef.o rrtmg_lw_taumol.o rrtmg_lw_cldprmc.o mcica_subcol_gen_lw.o parrrtm.o rrlw_vsn.o 
+rrtmg_lw_rad_nomcica.o : rrtmg_lw_rad_nomcica.f90 rrtmg_lw_rtrn.o rrlw_con.o rrlw_wvn.o parkind.o rrtmg_lw_taumol.o rrtmg_lw_setcoef.o rrtmg_lw_rtrnmr.o parrrtm.o rrlw_vsn.o rrtmg_lw_cldprop.o 
+rrtmg_lw_read_nc.o : rrtmg_lw_read_nc.f90 rrlw_kg04.o grid.o rrlw_kg06.o rrlw_kg13.o rrlw_kg16.o rrlw_kg03.o rrlw_ncpar.o rrlw_kg10.o rrlw_kg14.o rrlw_kg12.o rrlw_kg11.o rrlw_kg09.o rrlw_kg15.o rrlw_kg07.o rrlw_kg02.o rrlw_kg01.o rrlw_kg08.o rrlw_kg05.o 
+rrtmg_lw_rtrn.o : rrtmg_lw_rtrn.f90 rrlw_vsn.o parrrtm.o rrlw_con.o rrlw_tbl.o parkind.o rrlw_wvn.o 
+rrtmg_lw_rtrnmc.o : rrtmg_lw_rtrnmc.f90 rrlw_tbl.o rrlw_con.o rrlw_wvn.o parkind.o rrlw_vsn.o parrrtm.o 
+rrtmg_lw_rtrnmr.o : rrtmg_lw_rtrnmr.f90 rrlw_vsn.o parrrtm.o rrlw_tbl.o rrlw_con.o rrlw_wvn.o parkind.o 
+rrtmg_lw_setcoef.o : rrtmg_lw_setcoef.f90 rrlw_wvn.o rrlw_ref.o parkind.o parrrtm.o rrlw_vsn.o 
+rrtmg_lw_taumol.o : rrtmg_lw_taumol.f90 rrlw_kg04.o rrlw_wvn.o rrlw_ref.o parkind.o rrlw_kg06.o rrlw_kg13.o rrlw_kg16.o rrlw_kg03.o rrlw_kg14.o rrlw_con.o rrlw_kg10.o parrrtm.o rrlw_kg12.o rrlw_kg15.o rrlw_kg11.o rrlw_vsn.o rrlw_kg09.o rrlw_kg07.o rrlw_kg02.o rrlw_kg05.o rrlw_kg01.o rrlw_kg08.o 
+rrtmg_sw_cldprmc.o : rrtmg_sw_cldprmc.f90 rrsw_wvn.o parkind.o rrsw_cld.o rrsw_vsn.o parrrsw.o 
+rrtmg_sw_cldprop.o : rrtmg_sw_cldprop.f90 rrsw_vsn.o rrsw_cld.o parrrsw.o rrsw_wvn.o parkind.o 
+rrtmg_sw_init.o : rrtmg_sw_init.f90 rrsw_con.o rrsw_aer.o rrsw_kg23.o parkind.o rrsw_kg16.o rrsw_tbl.o rrsw_kg24.o rrsw_kg20.o rrsw_wvn.o rrsw_kg26.o rrsw_kg19.o rrtmg_sw_setcoef.o rrsw_kg22.o rrsw_kg27.o rrsw_kg25.o rrsw_kg21.o parrrsw.o rrsw_kg28.o rrsw_kg29.o rrsw_cld.o rrsw_kg17.o rrsw_vsn.o rrsw_kg18.o 
+rrtmg_sw_rad.o : rrtmg_sw_rad.f90 rrtmg_sw_setcoef.o mcica_subcol_gen_sw.o parrrsw.o rrtmg_sw_cldprmc.o rrsw_vsn.o rrsw_con.o rrsw_aer.o rrtmg_sw_spcvmc.o parkind.o rrsw_wvn.o 
+rrtmg_sw_rad_nomcica.o : rrtmg_sw_rad_nomcica.f90 parrrsw.o rrtmg_sw_setcoef.o rrtmg_sw_cldprop.o rrsw_vsn.o rrsw_aer.o rrsw_con.o parkind.o rrtmg_sw_spcvrt.o rrsw_wvn.o 
+rrtmg_sw_read_nc.o : rrtmg_sw_read_nc.f90 rrsw_kg19.o rrsw_kg22.o rrsw_kg27.o rrsw_kg25.o rrsw_kg21.o rrsw_kg28.o rrsw_kg29.o rrsw_kg17.o rrsw_kg18.o grid.o rrsw_kg23.o rrsw_ncpar.o rrsw_kg16.o rrsw_kg24.o rrsw_kg20.o rrsw_kg26.o 
+rrtmg_sw_reftra.o : rrtmg_sw_reftra.f90 rrsw_vsn.o rrsw_tbl.o parkind.o 
+rrtmg_sw_setcoef.o : rrtmg_sw_setcoef.f90 parkind.o rrsw_ref.o parrrsw.o rrsw_vsn.o 
+rrtmg_sw_spcvmc.o : rrtmg_sw_spcvmc.f90 rrtmg_sw_reftra.o rrsw_wvn.o rrtmg_sw_vrtqdr.o parkind.o rrsw_tbl.o rrsw_vsn.o parrrsw.o rrtmg_sw_taumol.o 
+rrtmg_sw_spcvrt.o : rrtmg_sw_spcvrt.f90 rrtmg_sw_reftra.o rrsw_wvn.o rrsw_tbl.o parkind.o rrtmg_sw_vrtqdr.o rrsw_vsn.o rrtmg_sw_taumol.o parrrsw.o 
+rrtmg_sw_taumol.o : rrtmg_sw_taumol.f90 rrsw_vsn.o rrsw_kg18.o rrsw_kg17.o rrsw_kg29.o rrsw_kg21.o rrsw_kg28.o parrrsw.o rrsw_kg25.o rrsw_kg27.o rrsw_kg22.o rrsw_kg19.o rrsw_kg26.o rrsw_wvn.o rrsw_kg20.o rrsw_kg24.o rrsw_kg16.o parkind.o rrsw_kg23.o rrsw_con.o 
+rrtmg_sw_vrtqdr.o : rrtmg_sw_vrtqdr.f90 parkind.o 
+run_slm.o : run_slm.f90 params.o runoff.o soil_proc.o vars.o slm_vars.o 
+runoff.o : runoff.f90 params.o grid.o consts.o slm_vars.o vars.o mpi_stuff.o 
+sat.o : sat.f90  
+setdata.o : setdata.f90 vars.o microphysics.o chemistry.o sgs.o simple_ocean.o terrain.o params.o grid.o fppmacros
+setfixdynamics.o : setfixdynamics.f90 params.o grid.o vars.o 
+setforcing.o : setforcing.f90 vars.o params.o 
+setgrid.o : setgrid.f90 vars.o params.o terrain.o 
+setparm.o : setparm.f90 vars.o microphysics.o cup.o instrument_diagnostics.o movies.o chemistry.o sgs.o terrain.o params.o 
+setperturb.o : setperturb.f90 microphysics.o vars.o rad.o sgs.o params.o terrain.o 
+setsurface.o : setsurface.f90 slm_vars.o vars.o params.o 
+sgs.o : sgs.f90 chemistry.o stat_coars.o grid.o terrain.o params.o tracers.o microphysics.o hbuffer.o consts.o mpi_stuff.o vars.o 
+shear_prod2D.o : shear_prod2D.f90 vars.o 
+shear_prod3D.o : shear_prod3D.f90 vars.o terrain.o 
+shr_kind_mod.o : shr_kind_mod.f90 parkind.o 
+shr_orb_mod.o : shr_orb_mod.f90 shr_kind_mod.o 
+simple_ocean.o : simple_ocean.f90 rad.o vars.o slm_vars.o consts.o params.o terrain.o grid.o slm_params.o 
+slm_params.o : slm_params.f90  
+slm_restart.o : slm_restart.f90 grid.o slm_vars.o rad.o ./../fppmacros
+slm_vars.o : slm_vars.f90 grid.o params.o terrain.o slm_params.o vars.o 
+slm_write2D.o : slm_write2D.f90 slm_vars.o grid.o params.o pnetcdf_stuff.o ./../fppmacros
+slm_write2Dinv.o : slm_write2Dinv.f90 slm_vars.o pnetcdf_stuff.o params.o grid.o ./../fppmacros
+soil_proc.o : soil_proc.f90 slm_vars.o vars.o params.o grid.o 
+stat_2Dinit.o : stat_2Dinit.f90 tracers.o vars.o params.o 
+stat_Minit.o : stat_Minit.f90 vars.o 
+stat_coars.o : stat_coars.f90 microphysics.o vars.o slm_vars.o terrain.o params.o grid.o fppmacros
+stat_mom.o : stat_mom.f90 vars.o 
+stat_moments.o : stat_moments.f90 vars.o microphysics.o terrain.o params.o 
+stat_sw1.o : stat_sw1.f90 vars.o 
+stat_sw2.o : stat_sw2.f90 vars.o 
+stat_tke.o : stat_tke.f90 vars.o 
+stat_varscalar.o : stat_varscalar.f90 grid.o 
+statistics.o : statistics.f90 instrument_diagnostics.o buildings.o terrain.o params.o grid.o tracers.o slm_vars.o rad.o vars.o hbuffer.o 
+stepout.o : stepout.f90 sgs.o stat_coars.o chemistry.o movies.o buildings.o instrument_diagnostics.o cup.o stat_moments.o params.o terrain.o tracers.o microphysics.o hbuffer.o slm_vars.o rad.o vars.o 
+subsidence.o : subsidence.f90 terrain.o microphysics.o vars.o 
+sun_vector.o : sun_vector.f90 mpi_stuff.o 
+surface.o : surface.f90 slm_vars.o vars.o rad.o mpi_stuff.o microphysics.o cup.o sgs.o simple_ocean.o terrain.o params.o 
+task_assign_bnd.o : task_assign_bnd.f90 grid.o 
+task_bound_uv.o : task_bound_uv.f90 vars.o mpi_stuff.o 
+task_box_smooth_3D.o : task_box_smooth_3D.f90  
+task_box_smooth_3D_real8.o : task_box_smooth_3D_real8.f90  
+task_exchange.o : task_exchange.f90 mpi_stuff.o grid.o advection.o 
+task_exchange_2D.o : task_exchange_2D.f90 mpi_stuff.o advection.o grid.o 
+task_init.o : task_init.f90 tracers.o rad.o slm_vars.o microphysics.o advection.o sgs.o params.o grid.o 
+task_rank_to_index.o : task_rank_to_index.f90 domain.o 
+task_ranks.o : task_ranks.f90 mpi_stuff.o grid.o 
+task_util_MPI.o : task_util_MPI.f90 mpi_stuff.o grid.o 
+terrain.o : terrain.f90 grid.o params.o vars.o fppmacros
+terrain_fill.o : terrain_fill.f90 microphysics.o vars.o terrain.o grid.o sgs.o 
+thompson_cloud_optics.o : thompson_cloud_optics.f90 parkind.o terrain.o grid.o parrrsw.o vars.o parrrtm.o rrlw_cld.o microphysics.o micro_params.o rrsw_cld.o 
+timer.o : timer.f90 grid.o 
+timer_util.o : timer_util.f90 params.o timer.o mpi_stuff.o 
+tke_full.o : tke_full.f90 sgs.o params.o terrain.o vars.o 
+tracers.o : tracers.f90 vars.o grid.o terrain.o params.o 
+transfer_coef.o : transfer_coef.f90 grid.o slm_vars.o 
+upperbound.o : upperbound.f90 params.o microphysics.o vars.o 
+utils.o : utils.f90 terrain.o grid.o 
+vapor_fluxes_canopy.o : vapor_fluxes_canopy.f90 slm_vars.o 
+vapor_fluxes_soil.o : vapor_fluxes_soil.f90 slm_vars.o 
+vars.o : vars.f90 grid.o 
+wet_deposition.o : wet_deposition.f90 cloudchem_Monitor.o chemistry_params.o cloudchem_Parameters.o grid.o vars.o 
+wrf_debug.o : wrf_debug.f90 grid.o 
+write_fields2D.o : write_fields2D.f90 buildings.o sgs.o pnetcdf_stuff.o terrain.o params.o tracers.o vars.o slm_vars.o fppmacros
+write_fields2DM.o : write_fields2DM.f90 vars.o pnetcdf_stuff.o params.o fppmacros
+write_fields2DZ.o : write_fields2DZ.f90 microphysics.o vars.o rad.o params.o terrain.o sgs.o pnetcdf_stuff.o fppmacros
+write_fields3D.o : write_fields3D.f90 vars.o rad.o microphysics.o tracers.o terrain.o params.o buildings.o chemistry.o pnetcdf_stuff.o sgs.o fppmacros
+write_terrain.o : write_terrain.f90 vars.o grid.o params.o terrain.o pnetcdf_stuff.o buildings.o 
+zero.o : zero.f90 sgs.o stat_coars.o tracers.o microphysics.o vars.o 
