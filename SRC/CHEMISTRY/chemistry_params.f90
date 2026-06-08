@@ -2,6 +2,7 @@ module chemistry_params
 
    use cloudchem_Parameters, only: NVAR, NSPEC, NFIX
    use cloudchem_Monitor, only: SPC_NAMES
+   use grid, only : nx, ny, nzm
 
    implicit none
 
@@ -15,6 +16,7 @@ module chemistry_params
    real, public :: sigma_accum = 2.04              ! stdev of accumulation mode
 
    real :: soil_wetness = 0.
+   real :: minimum_tropopause_height = 14000.
 
    logical :: do_only_tropospheric_chemistry = .true.
    logical :: do_transport_loss = .false.
@@ -41,6 +43,7 @@ module chemistry_params
    logical :: do_megan_isoprene = .true.
    logical :: do_surface_Isoprene_diurnal = .false.
    logical :: do_bdsnp_no = .true.
+   integer :: tropopause_index(nx, ny) = nzm     ! precip. rate 
 
    ! Lightning Switches
    logical :: do_CTG_lightning = .false.

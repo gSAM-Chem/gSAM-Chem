@@ -1,6 +1,6 @@
 &PARAMETERS
     !! RUN CONTROLS !!
-    caseid                  = 'gSAM_testing_NO_CHEMISTRY',
+    caseid                  = 'gSAM_testing',
     nrestart                = 0,
 
     dt                      = 1.0,
@@ -69,7 +69,7 @@
     
     perturb_type            = 1,
     
-    dochem = .false.,
+    dochem = .true.,
 
 
 &CHEMISTRY    
@@ -88,7 +88,7 @@
     cr_constants = 2800.0, 7400.0, 5200.0, 5200.0, 6800.0, 7200.0, 0.0, 0.0, 9200.0, 5700.0
 
     !! CHEMICAL SWITCHES !!
-    do_only_tropospheric_chemistry = .true.,
+    do_only_tropospheric_chemistry = .false.,
     do_transport_loss       = .false.,
 
     !! SURFACE EMISSIONS !!

@@ -20,9 +20,10 @@ module wet_deposition
 
 
     subroutine wet_deposition_driver(gchem_field, M_profile, change_in_qcl, change_in_qpl)
-        real, allocatable, dimension(:,:,:,:) :: gchem_field
-        real, allocatable, dimension(:) :: M_profile
-        real, allocatable, dimension(:,:,:) :: change_in_qcl, change_in_qpl
+        real, intent(inout) :: gchem_field(:,:,:,:)
+        real, intent(in)    :: M_profile(:)
+        real, intent(in)    :: change_in_qcl(:,:,:)
+        real, intent(in)    :: change_in_qpl(:,:,:)
 
         if ( do_convective_scavenging ) then
             call convective_scavenging(gchem_field, M_profile, change_in_qcl, change_in_qpl)
@@ -40,9 +41,10 @@ module wet_deposition
 
 
     subroutine convective_scavenging(gchem_field, M_profile, change_in_qcl, change_in_qpl)
-        real, allocatable, dimension(:,:,:,:) :: gchem_field
-        real, allocatable, dimension(:) :: M_profile
-        real, allocatable, dimension(:,:,:) :: change_in_qcl, change_in_qpl
+        real, intent(inout) :: gchem_field(:,:,:,:)
+        real, intent(in)    :: M_profile(:)
+        real, intent(in)    :: change_in_qcl(:,:,:)
+        real, intent(in)    :: change_in_qpl(:,:,:)
 
         real :: i, j, k, v, v_selected, updraft_velocity
         real :: cloud_conversion_rate_constant, fraction_in_liquid_phase, scavenging_rate_constant
@@ -86,9 +88,10 @@ module wet_deposition
 
 
     subroutine rainout(gchem_field, M_profile, change_in_qcl, change_in_qpl)
-        real, allocatable, dimension(:,:,:,:) :: gchem_field
-        real, allocatable, dimension(:) :: M_profile
-        real, allocatable, dimension(:,:,:) :: change_in_qcl, change_in_qpl
+        real, intent(inout) :: gchem_field(:,:,:,:)
+        real, intent(in)    :: M_profile(:)
+        real, intent(in)    :: change_in_qcl(:,:,:)
+        real, intent(in)    :: change_in_qpl(:,:,:)
         
         real :: i, j, k, v, v_selected
         real :: cloud_conversion_rate_constant, fraction_in_liquid_phase, rainout_rate_constant, cloud_mixing_ratio_threshold
@@ -134,13 +137,14 @@ module wet_deposition
     end subroutine rainout
 
     subroutine washout(gchem_field, M_profile, change_in_qcl, change_in_qpl)
-        real, allocatable, dimension(:,:,:,:) :: gchem_field
-        real, allocatable, dimension(:) :: M_profile
-        real, allocatable, dimension(:,:,:) :: change_in_qcl, change_in_qpl
+        real, intent(inout) :: gchem_field(:,:,:,:)
+        real, intent(in)    :: M_profile(:)
+        real, intent(in)    :: change_in_qcl(:,:,:)
+        real, intent(in)    :: change_in_qpl(:,:,:)
         
         real :: washout_rate_constant, cloud_mixing_ratio_threshold, precipitation_mixing_ratio_threshold, surface_precipitation_threshold
         real :: temp_corrected_Kh, fraction_washed_out
-        real :: i, j, k, v, v_selected              ! counter variables
+        integer :: i, j, k, v, v_selected              ! counter variables
 
         precipitation_mixing_ratio_threshold = 0.01         ! If we have precipitable droplets, UNCLEAR WHAT THRESHOLD!
         surface_precipitation_threshold = 1e-7               ! The precipitation must reach the surface, in kg m-2 s-1

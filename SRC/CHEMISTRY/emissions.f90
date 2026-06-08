@@ -2,7 +2,8 @@ module emissions
 
     use grid, only : nx, ny, nz, nzm, dx, dy, dz, day, time, dt, pres, nstep               ! pres is in mbar!
     use cloudchem_Parameters, only : ind_NO, ind_ISOP
-    use chemistry_params, only : do_megan_isoprene, do_surface_Isoprene_diurnal, do_bdsnp_no, CTG_decaria_reflectivity, CTG_price_and_rind, IC_decaria
+    use chemistry_params, only : do_megan_isoprene, do_surface_Isoprene_diurnal, do_bdsnp_no, CTG_decaria_reflectivity, CTG_price_and_rind, IC_decaria, tropopause_index
+    implicit none
 
     ! Common constants
     real :: pi = 3.1415927
@@ -263,7 +264,7 @@ contains
         integer :: lightning_time_step                                          ! How many time steps to skip before calculating lightning (function of dt)
         real :: moist_adiabatic_lapse_rate = 5e-3                               ! an estimate of the moist adiabatic lapse rate, in C / m
 
-        real :: radar_threshold = 1e-4                                           ! to match 20 dBZ, approximate qp mixing ratio (kg/kg) based on regression
+        real :: radar_threshold = 1                                           ! to match 20 dBZ, approximate qp mixing ratio (kg/kg) based on regression
         
         ! Cloud-to-ground lightning
         real :: cloud_to_ground_isotherm = -15                                  ! isoterm of the Gaussian mean for CTG lightning, in Celsius
@@ -420,7 +421,7 @@ contains
 
         implicit none
 
-        real :: radar_threshold = 1e-4                                           ! to match 20 dBZ, approximate qp mixing ratio (kg/kg) based on regression
+        real :: radar_threshold = 1                                           ! to match 20 dBZ, approximate qp mixing ratio (kg/kg) based on regression
 
         ! General parameters for both cloud-to-ground (CTG) and intracloud (IC) lightning
         real :: time_between_flashes = 180                                      ! 3 minutes

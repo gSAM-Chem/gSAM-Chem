@@ -36,7 +36,7 @@ ifeq ($(PLATFORM), Linux)
 		NCPATH = ${NETCDF}
 
 	else ifeq ($(HOSTTRIM),hermes)
-		FFLAGS = -O2 -axSSE4.2 -fp-model source -debug -traceback -lnetcdf -check all -fpp -check bounds -fpe0 -init=snan
+		FFLAGS = -O2 -axSSE4.2 -fp-model source -debug -traceback -lnetcdf -fpp
 		FFLAGS_O1 = -O1 -fp-model source
 		NCPATH = ${NETCDF}
 		
