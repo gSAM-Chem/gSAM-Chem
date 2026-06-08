@@ -6,15 +6,18 @@ module deposition
     use chemistry_params, only: dry_deposition_species, dry_deposition_velocities
     use grid, only : z, nx, ny, nzm
     use cloudchem_Monitor, only: SPC_NAMES
+    use vars, only : dtn
+
+    implicit none
 
     CONTAINS
     
     ! Note (JY): Could also use fluxbch instead of subtracting directly from gchem_field
     ! I kept it as the latter, since in the future we might want to have deposition in gridboxes not at the surface (e.g. leaves)
     subroutine dry_deposition_driver(gchem_field, g_depos_horiz_mean_tend_ISOPOOH, g_depos_horiz_mean_tend_IEPOX)
-        real, allocatable, dimension(:,:,:,:) :: gchem_field
-        real, allocatable, dimension(:) :: g_depos_horiz_mean_tend_ISOPOOH      ! Old variables that were used to store ISOPOOH deposition rates
-        real, allocatable, dimension(:) :: g_depos_horiz_mean_tend_IEPOX        ! Old variables that were used to store IEPOX deposition rates
+        real, intent(inout) :: gchem_field(:,:,:,:)
+        real, intent(inout) :: g_depos_horiz_mean_tend_ISOPOOH(:)               ! Old variables that were used to store ISOPOOH deposition rates
+        real, intent(inout) :: g_depos_horiz_mean_tend_IEPOX(:)                 ! Old variables that were used to store IEPOX deposition rates
 
         integer :: i, j, v, v_selected
         real :: bottommost_layer_height

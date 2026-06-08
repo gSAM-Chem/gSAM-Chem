@@ -9,7 +9,7 @@ module chemistry
 
   use rad, only : swDown, swUp
   use vars, only: rho, dtn, qcl, tabs0, pres, qv0, tabs, qpl, interactive_soil_wetness
-  use cloudchem_Parameters, only: NVAR, NSPEC, NFIX, ind_IEPOX, ind_ISOP1Nit, ind_ISOPOOH, ind_ISOPDiNit, ind_OH, ind_CO, NREACT  ! NSPEC=NVAR+NFIX
+  use cloudchem_Parameters, only: NVAR, NSPEC, NFIX, ind_IEPOX, ind_ISOP1Nit, ind_ISOPOOH, ind_ISOPDiNit, ind_OH, ind_O3, ind_CO, NREACT  ! NSPEC=NVAR+NFIX
   use params, only : dochem
   
   !! From KPP-generated files
@@ -25,7 +25,7 @@ module chemistry
                            do_IC_lightning, do_CTG_lightning, IC_decaria, CTG_decaria_reflectivity, CTG_price_and_rind, &
                            do_iepox_droplet_chem, do_iepox_aero_chem, hi_org, pHdrop, pHaero, & 
                            gas_init_name, gas_init_value, gas_out3D_name, flag_gchemvar_out3D, &
-                           MW_air, avgd, rho_aerosol, sigma_accum, soil_wetness
+                           MW_air, avgd, rho_aerosol, sigma_accum, soil_wetness, tropopause_index, minimum_tropopause_height
   
   use chem_aqueous, only : aq_species_names, naqchem_fields, flag_aqchemvar_out3D, flag_aqchemgasvar_out3D, aq_gasprod_species_names
   use chem_aerosol, only : ar_species_names, narchem_fields, flag_archemvar_out3D
@@ -56,6 +56,9 @@ module chemistry
   real, allocatable, dimension(:) :: g_depos_horiz_mean_tend_ISOPOOH ! in ppv/s
   real, allocatable, dimension(:) :: soil_NO_emission_flux 
   real, allocatable, dimension(:) :: isop_emission_flux
+
+   real, allocatable, dimension(:, :) :: tropopause_temp
+
 
   ! For wet deposition
   real, allocatable, dimension(:,:,:) :: previous_qcl  !  air density in molec/cm3
@@ -174,6 +177,8 @@ NAMELIST /CHEMISTRY/   do_only_tropospheric_chemistry, do_transport_loss, &
        ! Wet deposition
       allocate(previous_qcl(nx, ny, nzm), previous_qpl(nx, ny, nzm))
       allocate(change_in_qcl(nx, ny, nzm), change_in_qpl(nx, ny, nzm))
+
+      allocate(tropopause_temp(nx, ny))
       
       previous_qcl(:,:,:) = -9999
       previous_qpl(:,:,:) = -9999
@@ -319,8 +324,7 @@ subroutine chem_proc()
    REAL(8)                :: RCNTRL (20)
    REAL(8)                :: RSTATE (20)
   
-  integer, allocatable, dimension(:, :) :: tropopause_index
-  allocate(tropopause_index(nx, ny))
+  
   
   IERR      = 0                        ! KPP success or failure flag
   ISTATUS   = 0.0                   ! Rosenbrock output
@@ -339,24 +343,15 @@ subroutine chem_proc()
 
   call t_startf ('chem_proc')
 
-  call find_tropopause(tropopause_index)
-
-  if ( do_only_tropospheric_chemistry ) then
-   do i = 1, nx
-      do j = 1,ny
-         do k = 1,nzm
-            if ( k .gt. tropopause_index(i, j) + 5 ) then
-               gchem_field(i, j, k, :) = 0.
-            endif
-         enddo
-      enddo
-   enddo
-  endif
-
   gchem_horiz_mean_tend(:,:) = 0.
   g_depos_horiz_mean_tend_IEPOX(:) = 0.
   g_depos_horiz_mean_tend_ISOPOOH(:) = 0.
   M_profile = 0.001 * RHO * avgd / MW_air
+
+  if ( do_only_tropospheric_chemistry .and. ( z(nzm) .gt. minimum_tropopause_height ) ) then 
+      tropopause_index(:, :) = nzm
+      call find_tropopause(tropopause_index, tropopause_temp)
+   endif
 
   do j = 1, ny
      do i = 1, nx
@@ -371,7 +366,7 @@ subroutine chem_proc()
 
             C_M = M_profile(k)                 ! Air density [molec/cm3]
             C_H2O = C_M * qv0(k) * 28.97 / 18.02 ! qv0 is in kg kg-1 INTERNALLY, g kg-1 in output!
-            ! gchem_field(i, j, k, ind_H2O) = qv0(k) / 1000. * 28.97 / 18.02         ! Update water vapor mixing ratio (in mol mol-1 w.r.t. dry air)
+            !!!! gchem_field(i, j, k, ind_H2O) = qv0(k) / 1000. * 28.97 / 18.02         ! Update water vapor mixing ratio (in mol mol-1 w.r.t. dry air)
             
             var_profile(k,:) = gchem_field(i,j,k,:) * M_profile(k)               ! Convert from mole fraction to [molec cm-3]
             fixed_profile(k,:) = gchem_profile_fixed(k,:) * M_profile(k)         ! Convert from mole fraction to [molec cm-3]
@@ -380,7 +375,7 @@ subroutine chem_proc()
 
             ! Set concentrations in KPP to the current box's concentration [molec cm-3]
             C(1:NVAR) = var_profile(k, :)
-            ! C(NVAR+1:NSPEC) = fixed_profile(k, :)
+            !!!! C(NVAR+1:NSPEC) = fixed_profile(k, :)
 
             call Update_RCONST()
 
@@ -388,11 +383,18 @@ subroutine chem_proc()
             call Update_PHOTO()
 
             rate_const(k, :) = RCONST                                            ! rate_const is the local version of RCONST
+
+            if ( do_only_tropospheric_chemistry ) then
+               if ( ( z(tropopause_index(i, j)) .gt. minimum_tropopause_height ) .and. ( k .gt. tropopause_index(i, j) + 5 ) ) then
+                  rate_const(k, :) = 0.
+               endif
+            endif
+
             call Fun(var_profile(k, :), fixed_profile(k, :), rate_const(k, :), gas_column_tend_profile(k, :))     ! Calculate derivatives
             CALL Integrate(0.0, dtn, ICNTRL, RCNTRL, ISTATUS, RSTATE, IERR)       ! Use RCONST and Func to integrate the concentrations a timestep
 
             IF ( IERR < 0 ) THEN
-               write(*,*) 'KPP failed here: ', i,j,k,IERR
+               write(*,*) 'KPP failed here: ', i, j, k, IERR
                STOP
             ENDIF
 
@@ -400,10 +402,8 @@ subroutine chem_proc()
             gchem_field(i,j,k,:) = C(1:NVAR) / M_profile(k)
             gchem_horiz_mean_tend(k,:) = gchem_horiz_mean_tend(k,:) + adjusted_tendency ! / M_profile(k)
         enddo
-        
-        
      end do
-  end do   
+  end do
   
   call check_nan
 
@@ -441,12 +441,10 @@ subroutine chem_proc()
 
   g_depos_horiz_mean_tend_ISOPOOH = g_depos_horiz_mean_tend_ISOPOOH/(nx*ny)
   g_depos_horiz_mean_tend_IEPOX = g_depos_horiz_mean_tend_IEPOX/(nx*ny)
-
-  deallocate(tropopause_index)
   call t_stopf ('chem_proc')
 end subroutine chem_proc
 
-subroutine find_tropopause(tropopause_index)
+subroutine find_tropopause(tropopause_index, tropopause_temp)
    use grid, only : nx, ny, z
    use vars, only : tabs
 
@@ -454,19 +452,14 @@ subroutine find_tropopause(tropopause_index)
    integer :: i,j,k
    
    integer, intent(out) :: tropopause_index(nx, ny)
-   real, allocatable, dimension(:, :) :: tropopause_temp
-
-   allocate(tropopause_temp(nx, ny))
+   real, intent(out) :: tropopause_temp(nx, ny)
 
    do i = 1,nx
       do j = 1,ny
          tropopause_temp(i, j) = minval(tabs(i,j,:), dim = 1)
-         tropopause_index(i, j) = minloc (tabs(i,j,:), dim = 1)
+         tropopause_index(i, j) = minloc(tabs(i,j,:), dim = 1)
       enddo
    enddo
-
-   deallocate(tropopause_temp)
-
 end subroutine find_tropopause
 
 subroutine check_nan
@@ -474,16 +467,19 @@ subroutine check_nan
 
    integer :: i, j, k, n
 
-   do i = 1,nx
-      do j = 1,ny
+   do i = 1, nx
+      do j = 1, ny
          do k = 1, nzm
             do n = 1, ngchem_fields
-               if ( ( isnan(gchem_field(i,j,k,n)) ) .or. ( gchem_field(i,j,k,n) <= 1 ) ) then
+               if ( ( isnan(gchem_field(i,j,k,n)) ) .or. ( gchem_field(i,j,k,n) .gt. 1 ) ) then
                   print*, "******* There is a NaN or a high value in gchem_field. Check if your system is unstable! ****** ", gchem_field(i,j,k,n)
+                  print*, "******* Value of M profile: ", M_profile(k)
                   print*, "i = ", i 
                   print*, "j = ", j 
                   print*, "k = ", k 
                   print*, "n = ", n 
+
+                  write(*,*) 'TEMP=', tabs(i,j,k)
                   STOP
                endif
             enddo
@@ -617,6 +613,7 @@ subroutine chem_finalize()
      deallocate(g_depos_horiz_mean_tend_ISOPOOH)
      deallocate(rate_const)
      deallocate(fluxbch, fluxtch)
+     deallocate(tropopause_temp)
 
      if ( do_iepox_aero_chem .or. do_iepox_droplet_chem ) then 
       call het_chem_finalize()
@@ -681,7 +678,7 @@ subroutine chem_statistics()
     call hbuf_put(trim(SPC_NAMES(n))//'+', gchem_horiz_mean_tend(:, n), gas_output_scale)
   end do  
 
-  if ( ngchem_fixed .ge. 1)  then
+  if ( ngchem_fixed .gt. 1)  then
         do n = 1,ngchem_fixed
                 name = trim(SPC_NAMES(n+ngchem_fields))
                 call hbuf_put(name, gchem_profile_fixed(:, n), gas_output_scale)
@@ -806,5 +803,4 @@ subroutine chem_write_fields3D(nfields1)
    end if
   
 end subroutine chem_write_fields3D
-
 end module chemistry

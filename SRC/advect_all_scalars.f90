@@ -123,8 +123,8 @@ if(docloud) total_water_adv = total_water_adv + total_water()
     compute_variance_stats = .false.
 
     if ( dochem ) then
-      do k = 1,ngchem_fields
-        call advect_scalar(gchem_field(:,:,:,k),gchadv(:,k),gchwle(:,k),dummy,dummy,dummy, &
+      do k = 1, ngchem_fields
+        call advect_scalar(gchem_field(:,:,:,k), gchadv(:,k), gchwle(:,k), dummy, dummy, dummy, &
               compute_variance_stats, .true., .false., .false., 0.)
           
       end do
