@@ -1,0 +1,268 @@
+subroutine diffuse_mom3D
+	
+!        momentum tendency due to SGS diffusion
+
+use vars
+use sgs, only: tk, grdf_x, grdf_y, grdf_z
+use params, only: docolumn, dowallx, dowally
+use terrain
+use check_energy
+implicit none
+
+real rdz2,rdz,rdz25
+
+integer i,j,k,ic,ib,jb,jc,kc,kcu
+real tkx, tky, tkz, rhoi, iadzw, iadz, rdx2, rdy2
+real rdx2u(ny,nzm),rdx2v(ny,nzm),rdx2w(ny,nzm)
+real rdy2u(0:ny,nzm),rdy2v(0:ny,nzm),rdy2w(0:ny,nzm)
+real fx(0:nx,1:ny),fy(1:nx,0:ny),fz(1:nx,1:ny,nz)
+
+! precompute coefficeints used in diffuse_mom3D
+rdx2=1./(dx*dx)
+rdy2=1./(dy*dy)
+do k=1,nzm
+  do j=1,ny
+   rdx2u(j,k)=rdx2*imu(j)*grdf_x(j,k)
+   rdx2v(j,k)=rdx2*imuv(j) * grdf_x(j,k)
+   rdx2w(j,k)=rdx2*imu(j) * grdf_x(j,k)
+  end do
+end do
+do k=1,nzm
+  do j=0,ny
+   jc=j+1
+   rdy2u(j,k)=rdy2/adyv(jc)**2*muv(jc)  * grdf_y(j,k)
+   rdy2v(j,k)=rdy2/ady(j)**2*mu(j) * grdf_y(j,k)
+   rdy2w(j,k)=rdy2/adyv(jc)**2*muv(jc) * grdf_y(j,k)
+  end do
+end do
+
+rdz=1./dz
+!-----------------------------------------
+! diffusion of v
+
+do k=1,nzm
+  kcu=min(kc,nzm)
+  do j=1,ny
+   do i=0,nx
+    ic=i+1
+    tkx=rdx2u(j,k)*tk(i,j,k)*terra(i,j,k)
+    fx(i,j)=-tkx*(u(ic,j,k)-u(i,j,k))*min(terrau(ic,j,k),terrau(i,j,k))
+   end do 
+   do i=1,nx
+    ib=i-1
+    dudt(i,j,k,na)=dudt(i,j,k,na)-imu(j)*(fx(i,j)-fx(ib,j))
+   end do  
+  end do 
+end do
+
+do k=1,nzm
+  kcu=min(kc,nzm)
+  do j=0,ny
+   jc=j+1
+   do i=1,nx
+    ib=i-1
+    tky=rdy2u(j,k)*(tk(i,j,k)*terra(i,j,k)+tk(ib,j,k)*terra(ib,j,k) &
+               +tk(i,jc,k)*terra(i,jc,k)+tk(ib,jc,k)*terra(ib,jc,k)) &
+             /(terra(i,j,k)+terra(ib,j,k)+terra(i,jc,k)+terra(ib,jc,k)+1.e-10)
+    fy(i,j)=-tky*((u(i,jc,k)-u(i,j,k))*min(terrau(i,jc,k),terrau(i,j,k)))
+   end do 
+  end do 
+  do j=1,ny
+    jb=j-1
+    do i=1,nx    
+     dudt(i,j,k,na)=dudt(i,j,k,na)-imu(j)*(fy(i,j)-fy(i,jb))
+   end do 
+  end do 
+end do 
+
+do k=1,nzm-1
+ kc=k+1
+ iadz = 1./adz(k)
+ iadzw= 1./adzw(kc)
+ rdz2 = rdz*rdz * grdf_z(k)
+ rdz25 = rdz2
+  do j=1,ny
+   jb=j-1
+   do i=1,nx
+    ib=i-1
+    tkz=rdz25*(tk(i,j,k)*terra(i,j,k)+tk(ib,j,k)*terra(ib,j,k) &
+              +tk(i,j,kc)*terra(i,j,kc)+tk(ib,j,kc)*terra(ib,j,kc)) &
+             /(terra(i,j,k)+terra(ib,j,k)+terra(i,j,kc)+terra(ib,j,kc)+1.e-10)
+    fz(i,j,kc)=-tkz*( (u(i,j,kc)-u(i,j,k))*min(terrau(i,j,kc),terrau(i,j,k))*iadzw)*rhow(kc)
+    uwsb(kc)=uwsb(kc)+fz(i,j,kc)*wgtu(j,kc)*terrau(i,j,kc)
+  end do
+ end do
+end do
+
+do j=1,ny
+ do i=1,nx
+   fz(i,j,k_terrau(i,j))=fluxbu(i,j) * rdz * rhow(k_terrau(i,j))
+   fz(i,j,nz)=fluxtu(i,j) * rdz * rhow(nz)
+   uwsb(k_terrau(i,j)) = uwsb(k_terrau(i,j)) + fz(i,j,k_terrau(i,j)) &
+                         *wgtu(j,k_terrau(i,j))*terrau(i,j,k_terrau(i,j))
+  end do
+end do
+
+do k=1,nzm
+  kc=k+1
+  rhoi = 1./(rho(k)*adz(k))
+  do j=1,ny
+   do i=1,nx
+    dudt(i,j,k,na)=dudt(i,j,k,na)-(fz(i,j,kc)-fz(i,j,k))*rhoi
+   end do
+  end do
+end do ! k
+
+!--------------------------------------------------------------------------
+! diffusion of v
+
+do k=1,nzm
+  kcu=min(kc,nzm)
+  do j=1,ny
+   jb=j-1
+   do i=0,nx
+    ic=i+1
+    tkx=rdx2v(j,k)*(tk(i,j,k)*terra(i,j,k)+tk(i,jb,k)*terra(i,jb,k) &
+               +tk(ic,j,k)*terra(ic,j,k)+tk(ic,jb,k)*terra(ic,jb,k)) &
+              /(terra(i,j,k)+terra(i,jb,k)+terra(ic,j,k)+terra(ic,jb,k)+1.e-10)
+    fx(i,j)=-tkx*((v(ic,j,k)-v(i,j,k))*min(terrav(ic,j,k),terrav(i,j,k)))
+   end do
+   do i=1,nx
+    ib=i-1
+    dvdt(i,j,k,na)=dvdt(i,j,k,na)-imuv(j)*(fx(i,j)-fx(ib,j))
+   end do
+  end do
+end do
+
+do k=1,nzm
+  kc=k+1
+  kcu=min(kc,nzm)
+  do j=0,ny
+   jc=j+1
+   do i=1,nx
+    tky=rdy2v(j,k)*tk(i,j,k)*terra(i,j,k)
+    fy(i,j)=-tky*(v(i,jc,k)-v(i,j,k))*min(terrav(i,jc,k),terrav(i,j,k))
+   end do
+  end do
+  do j=1,ny
+    jb=j-1
+    do i=1,nx
+     dvdt(i,j,k,na)=dvdt(i,j,k,na)-imuv(j)*(fy(i,j)-fy(i,jb))
+   end do
+  end do
+end do
+
+do k=1,nzm-1
+ kc=k+1
+ iadz = 1./adz(k)
+ iadzw= 1./adzw(kc)
+ rdz2 = rdz*rdz * grdf_z(k)
+ rdz25 = rdz2
+  do j=1,ny
+   jb=j-1
+   do i=1,nx
+    ib=i-1
+    tkz=rdz25*(tk(i,j,k)*terra(i,j,k)+tk(i,jb,k)*terra(i,jb,k) &
+              +tk(i,j,kc)*terra(i,j,kc)+tk(i,jb,kc)*terra(i,jb,kc)) &
+             /(terra(i,j,k)+terra(i,jb,k)+terra(i,j,kc)+terra(i,jb,kc)+1.e-10)
+    fz(i,j,kc)=-tkz*( (v(i,j,kc)-v(i,j,k))*min(terrav(i,j,kc),terrav(i,j,k))*iadzw)*rhow(kc)
+    vwsb(kc)=vwsb(kc)+fz(i,j,kc)*wgtv(j,kc)*terrav(i,j,kc)
+  end do 
+ end do
+end do
+
+do j=1,ny
+ do i=1,nx
+   fz(i,j,k_terrav(i,j))=fluxbv(i,j) * rdz * rhow(k_terrav(i,j))
+   fz(i,j,nz)=fluxtv(i,j) * rdz * rhow(nz)
+   vwsb(k_terrav(i,j)) = vwsb(k_terrav(i,j)) + fz(i,j,k_terrav(i,j)) &
+                              *wgtv(j,k_terrau(i,j))*terrav(i,j,k_terrau(i,j))
+  end do
+end do
+ 
+do k=1,nzm
+  kc=k+1
+  rhoi = 1./(rho(k)*adz(k))
+  do j=1,ny
+   do i=1,nx
+    dvdt(i,j,k,na)=dvdt(i,j,k,na)-(fz(i,j,kc)-fz(i,j,k))*rhoi
+   end do
+  end do
+end do ! k
+
+                                
+!-------------------------------------------------------------------
+! Diffusion of w
+
+do k=1,nzm
+  kc=k+1
+  kcu=min(kc,nzm)
+  do j=1,ny
+   do i=0,nx
+    ic=i+1
+    tkx=rdx2w(j,k)*(tk(i,j,k)*terra(i,j,k)+tk(ic,j,k)*terra(ic,j,k) &
+               +tk(i,j,kcu)*terra(i,j,kcu)+tk(ic,j,kcu)*terra(ic,j,kcu)) &
+              /(terra(i,j,k)+terra(ic,j,k)+terra(i,j,kcu)+terra(ic,j,kcu)+1.e-10)
+    fx(i,j)=-tkx*((w(ic,j,kc)-w(i,j,kc))*min(terraw(ic,j,kc),terraw(i,j,kc)))
+   end do
+   do i=1,nx
+    ib=i-1
+    dwdt(i,j,kc,na)=dwdt(i,j,kc,na)-imu(j)*(fx(i,j)-fx(ib,j))
+   end do
+  end do
+end do
+
+do k=1,nzm
+  kc=k+1
+  kcu=min(kc,nzm)
+  do j=0,ny
+   jc=j+1
+   do i=1,nx
+    tky=rdy2w(j,k)*(tk(i,j,k)*terra(i,j,k)+tk(i,jc,k)*terra(i,jc,k) &
+               +tk(i,j,kcu)*terra(i,j,kcu)+tk(i,jc,kcu)*terra(i,jc,kcu)) &
+             /(terra(i,j,k)+terra(i,jc,k)+terra(i,j,kcu)+terra(i,jc,kcu)+1.e-10)
+    fy(i,j)=-tky*((w(i,jc,kc)-w(i,j,kc))*min(terraw(i,jc,kc),terraw(i,j,kc)))
+   end do
+  end do
+  do j=1,ny
+    jb=j-1
+    do i=1,nx
+     dwdt(i,j,kc,na)=dwdt(i,j,kc,na)-imu(j)*(fy(i,j)-fy(i,jb))
+   end do
+  end do
+end do
+                                
+do k=1,nzm-1
+ kc=k+1
+ iadz = 1./adz(k)
+ rdz2 = rdz*rdz * grdf_z(k)
+  do j=1,ny
+   jb=j-1
+   do i=1,nx
+    ib=i-1
+    tkz=rdz2*tk(i,j,k)*terra(i,j,k)
+    fz(i,j,kc)=-tkz*(w(i,j,kc)-w(i,j,k))*min(terraw(i,j,kc),terraw(i,j,k))*rho(k)*iadz
+  end do
+ end do
+end do
+
+do j=1,ny
+ do i=1,nx
+   fz(i,j,k_terra(i,j)) = 0.
+   tkz=rdz2*grdf_z(nzm)*tk(i,j,nzm)
+   fz(i,j,nz)=-2.*tkz*(w(i,j,nz)-w(i,j,nzm))/adz(nzm)*rho(nzm)
+  end do
+end do
+
+do k=2,nzm
+  rhoi = 1./(rhow(k)*adzw(k))
+  do j=1,ny
+   do i=1,nx 
+    dwdt(i,j,k,na)=dwdt(i,j,k,na)-(fz(i,j,k+1)-fz(i,j,k))*rhoi
+   end do
+  end do
+end do ! k
+
+call sumenergy(-1,'diff_mom3D')
+
+end subroutine diffuse_mom3D

@@ -1,0 +1,132 @@
+subroutine diffuse_scalar_z (field,fluxb,fluxt,tkh,rho,rhow,flux)
+
+use grid
+use params, only: docolumn,dosgs
+use terrain, only: k_terra, terra, terraw
+implicit none
+! input	
+real, intent(inout) :: field(dimx1_s:dimx2_s, dimy1_s:dimy2_s, nzm)	! scalar
+real, intent(in) ::  tkh(0:nxp1,1-YES3D:nyp1,nzm)	! eddy conductivity
+real, intent(in) :: fluxb(nx,ny)		! bottom flux
+real, intent(in) :: fluxt(nx,ny)		! top flux
+real, intent(in) :: rho(nzm)
+real, intent(in) :: rhow(nz)
+real, intent(out) :: flux(nz)
+real flx(0:nz)
+! local        
+real(8) rdz, rdz2, rdz5, tkz, iadz, iadzw, a, b, c, d, e
+real(8) alpha(nx,ny,nzm), beta(nx,ny,nzm)
+integer i,j,k,kc,kb
+
+if(.not.dosgs) return
+call t_startf('diffuse_scalar_z')
+
+if (dostatis) then
+ ! for statistics:
+ rdz2 = 1./dz**2
+ rdz = 1./dz
+ do k=1,nzm-1
+  kc=k+1
+  rdz5 = rdz2*rhow(kc)/adzw(kc)
+  do j=1,ny
+   do i=1,nx
+     tkz=(tkh(i,j,k)*terra(i,j,k)+tkh(i,j,kc)*terra(i,j,kc))/ &
+         (terra(i,j,k)+terra(i,j,kc)+1.e-9)
+     flx(k)=-rdz5*tkz*(field(i,j,kc)-field(i,j,k))*terraw(i,j,kc)
+     flux(kc) = flux(kc) + 0.5*flx(k)*wgtw(j,kc)*terraw(i,j,kc)
+   end do
+  end do
+ end do
+ do j=1,ny
+  do i=1,nx
+    k=k_terra(i,j)
+    flx(k-1)=fluxb(i,j)*rdz*rhow(k)
+    flux(k) = flux(k) + flx(k-1)*wgtw(j,k)*terraw(i,j,k)
+  end do
+ end do
+end if
+
+
+
+rdz2 = dtn/dz**2
+do j=1,ny
+ do i=1,nx
+  k = k_terra(i,j)
+  kc =min(nzm,k+1)
+  iadzw = rdz2*rhow(kc)/(adzw(kc)*adz(k)*rho(k))
+  tkz = (tkh(i,j,k)*terra(i,j,k)+tkh(i,j,kc)*terra(i,j,kc))/ &
+        (terra(i,j,k)+terra(i,j,kc)+1.e-9)
+  c = -tkz*iadzw
+  b = 1. - c
+  d = field(i,j,k) + dtn*rhow(k)/(rho(k)*dz*adz(k))*fluxb(i,j)
+  alpha(i,j,k) = -c/b
+  beta(i,j,k) = d/b
+ end do
+end do
+do k=2,nzm-1
+ kc=k+1
+ kb=k-1
+ iadz = rdz2*rhow(k)/(adzw(k)*adz(k)*rho(k))
+ iadzw = rdz2*rhow(kc)/(adzw(kc)*adz(k)*rho(k))
+ do j=1,ny
+   do i=1,nx
+    if(k.gt.k_terra(i,j)) then
+      tkz = 0.5*(tkh(i,j,kb)+tkh(i,j,k)) 
+      a = -tkz*iadz
+      tkz = 0.5*(tkh(i,j,k)+tkh(i,j,kc)) 
+      c = -tkz*iadzw
+      b = 1. - a - c
+      d = field(i,j,k)
+      e = b + a*alpha(i,j,k-1)
+      alpha(i,j,k) = -c/e
+      beta(i,j,k) = (d-a*beta(i,j,k-1))/e
+    end if
+   end do
+ end do
+end do
+k = nzm
+kb = k-1
+kc = k+1
+iadz = rdz2*rhow(k)/(adzw(k)*adz(k)*rho(k))
+do j=1,ny
+ do i=1,nx
+  tkz = (tkh(i,j,k)*terra(i,j,k)+tkh(i,j,kb)*terra(i,j,kb))/ &
+         (terra(i,j,k)+terra(i,j,kb)+1.e-9) 
+  a = -tkz*iadz
+  b = 1. - a
+  d = field(i,j,k) - dtn*rhow(kc)/(rho(k)*dz*adz(k))*fluxt(i,j)
+  e = b + a*alpha(i,j,k-1)
+  field(i,j,k) = (d-a*beta(i,j,k-1))/e
+ end do
+end do
+do k=nzm-1,1,-1
+ kc=k+1
+ do j=1,ny
+   do i=1,nx
+    if(k.ge.k_terra(i,j)) then
+      field(i,j,k) = alpha(i,j,k)*field(i,j,kc) + beta(i,j,k)
+    end if
+   end do
+ end do
+end do
+
+if (dostatis) then
+! for statistics:
+ rdz2 = 1./dz**2
+ do k=1,nzm-1
+  kc=k+1
+  rdz5 = rdz2*rhow(kc)/adzw(kc)
+  do j=1,ny
+   do i=1,nx
+     tkz=(tkh(i,j,k)*terra(i,j,k)+tkh(i,j,kc)*terra(i,j,kc))/ &
+         (terra(i,j,k)+terra(i,j,kc)+1.e-9)
+     flx(k)=-rdz5*tkz*(field(i,j,kc)-field(i,j,k))*terraw(i,j,kc)
+     flux(kc) = flux(kc) + 0.5*flx(k)*wgtw(j,kc)*terraw(i,j,kc)
+   end do
+  end do
+ end do
+end if
+
+
+call t_stopf('diffuse_scalar_z')
+end subroutine diffuse_scalar_z
