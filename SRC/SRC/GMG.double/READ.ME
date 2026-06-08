@@ -1,0 +1,25 @@
+# Multigrid Solver for Pressure Problems
+
+This repository contains an advanced multigrid solver implemented in Fortran 90, specifically designed for pressure problems in climate modeling. The solver leverages various multigrid techniques to efficiently solve Helmholtz equations arising from a climate-modeling problem. Key features include support for mixed precision arithmetic, adaptive line smoothers, and V-cycle or full-MG strategies. Additionally, the solver is enhanced with robust testing frameworks and utility modules.
+
+## Contents
+
+- **Source Code**
+  - `gmg.f90`: Implementation of the multigrid solver interface.
+  - `gmg_kernel.F90`: Core multigrid algorithms including discretization and V-cycles.
+  - `gmg_data.F90`: Data structures and solver options.
+  - `gmg_utils.F90`: Utility routines for the multigrid solver.
+  - `gmg_discr.f90`: Discretization of the PDE.
+  - `.inc` Files:
+    - `gmg_kernel.inc`: Included by `gmg_kernel.F90` for precision-specific implementations.
+    - `gmg_utils.inc`: Included by `gmg_utils.F90` for precision-specific utility routines.
+
+
+## License
+
+This project is licensed under the MIT License - see the `LICENSE` file for details.
+
+## Acknowledgments
+
+The multigrid solver is adapted from code written by Cao Lu and further developed by Oliver Yang and Xiangmin Jiao. Special thanks to contributors who have enhanced the solver’s capabilities and robustness.
+

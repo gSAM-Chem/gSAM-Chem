@@ -1,0 +1,1668 @@
+!==============================================================================
+! module slm_vars
+! Note:
+! contains the declaration of variables and parameters
+! contains function:
+!	function fh_calc	computes 
+! contains subroutines:
+!	subroutine init_soil_tw		1.read 'soil' under case directory
+!					2.allocate dimension for the soil related 
+!					  variables following the number of soil specified in 'soil'
+!	subroutine vege_root_init	1. computes soil depths of each layer center and layer's interface
+!					2. computes the density fraction of total root present in each soil layer
+!	subroutine slm_init		1. read vegetation type map under case directory
+!					2. Assign vegetion type specific parameters for each grid following the predefined vegetation parameter file under RUNDATA
+!					3. Assign soil parameter values following the soil type read from 'soil' 
+!	subroutine init_slm_vars
+!	subroutine collect_2D_stat_vars 1. collect 2D statistics
+!	subroutine slm_stepout		1. printout temperature and surface heat fluxes computed by SLM, called in SRC/stepout()
+!	subroutine slm_setparm		1. read parameters specified in prm
+!       subroutine slm_forcing         update surface information
+!	subroutine slm_stat_2Dinit    1. initialize 2D statistics
+!	subroutine fminmax_print_slm	1. compute min/max across land grids
+!
+! Original code: Jungmin Lee, 2016-
+! Subsequent modifications: 2018-, Marat Khairoutdinov
+!==============================================================================
+
+MODULE slm_vars
+! From SAM
+! depending on the version of SAM, the location of variables and parameters need to be adjusted
+use grid, only : save2dbin,case, caseid,rank,restart_sep,nsubdomains,dompi,&
+                 nx,ny,nx_gl,ny_gl, dtn,dt,day,&
+                 dtfactor, masterproc, dostatis,nstep,nprint,&
+                 nsave2D,nstat,nrestart, nstop, nelapse,nrestart_skip,&
+                 case_restart, caseid_restart
+use slm_params
+use params, only : lcond, lsub, ggr, rv, cp, rgas, epsv, SLM
+use vars, only : landmask 
+
+IMPLICIT NONE
+
+INTEGER, parameter :: nsoil = 9   ! number of soil levels
+!========================================================
+! NAMELIST elements for LAND, variables that are specified in prm
+!========================================================
+LOGICAL :: dosoilwnudging = .false.
+LOGICAL :: dosoiltnudging = .false.
+LOGICAL :: dooutthermal = .false. ! output thermal conductivity and heat capacity
+logical:: readland = .false. ! read land types from file
+logical:: readseaice = .false. ! read seaice from file
+logical:: readsoil = .false. ! read soil from file
+logical:: readinitsoil = .false. ! read soil initial fields from file
+logical:: readsnow = .false. ! read snow depth from file
+logical:: readsnowt = .false. ! read snow temperature from file
+logical:: readimperv = .false. ! read impervisness from file
+logical:: dosoilvolumetric = .false. ! convert input volumetric soil (file soil only) to soil wetness
+logical:: dorunoff = .false. ! turn on runoff of water
+
+character(120):: landtypefile = ""
+character(120):: seaicefile = ""
+character(120):: LAIfile = ""
+character(120):: soilfile = ""
+character(120):: soilinitfile = ""
+character(120):: snowfile = ""
+character(120):: snowtfile = ""
+character(120):: impervfile = ""
+
+REAL :: tausoil = 86400.
+integer:: landtype0 = 16 ! default landtype over whole domain
+real:: LAI0 = 0. ! default LAI
+real:: clay0 = 0. ! default clay percentage
+real:: sand0 = 0. ! default sand percentage
+real:: soilt0 = -1. ! default soil temperature (if -1, file soil is used)
+real:: soilw0 = -1. ! default soil wetness (if -1, file soil is used)
+real:: snow0 = 0. ! default snow depth (m)
+real:: snowt0 = 0. ! default snow temperature (K)
+real:: IMPERV0 = 0. ! default impervissness
+
+!================================================================
+! variable lists
+!================================================================
+REAL (KIND=DBL) :: dtn_dbl, dtfactor_dbl 
+
+LOGICAL :: flag_vege_init = .true. ! flag for some of prognostiv SLM variables initialization
+
+REAL precip_slm(nx,ny)   ! reference precipitation from SAM, used in SRC/precip_fall()
+
+REAL, DIMENSION(nx,ny) :: energy_bal, energy_bal_c, energy_bal_s
+
+! prognostics variables
+REAL (KIND=DBL), DIMENSION(nx,ny) :: t_canop , & ! canopy leaf temperature
+     mw, & ! water storage on leaves, kg/m2 = mm of water
+     mws, & ! water storage in puddle/snow, kg/m2 = mm of water
+     t_skin ! skin temperature, surface level viewed from atmosphere
+
+REAL (KIND=DBL), allocatable ::  soilt(:,:,:) ! soil temperature at each soil layer
+REAL (KIND=DBL), allocatable ::  soilw(:,:,:) ! soil wetness at each soil layer
+
+! diagnostic variables 
+REAL (KIND=DBL) t_cas(nx,ny) ! canopy air space temperature
+REAL (KIND=DBL) q_cas(nx,ny) ! canopy air space specific humidity
+
+REAL (KIND=DBL) soilw_inc(nsoil), t_canop_inc, mw_inc
+
+integer landtype(nx,ny) ! IGBP landtypeA (= 1 to 16)
+REAL (KIND=DBL) LAI(nx,ny) ! Leaf Area Index
+
+! vegetation parameter lists : read from input file, RUNDATA/landtype_param_set1*, * is an integer assigned to a specific vegetation
+logical, DIMENSION(nx,ny) :: vegetated ! vegetation type (.false. - baresoil, othewise vegetated land)
+
+INTEGER, DIMENSION(nx,ny) :: landicemask ! (0-no ice, 1-glacier)
+INTEGER, DIMENSION(nx,ny) :: seaicemask = 0 ! (0-no ice, 1-seaice)
+INTEGER, DIMENSION(nx,ny) :: icemask ! (0-no ice, 1-ice (glacier or seaice)
+
+REAL (KIND=DBL) snow_mass(nx,ny) ! (mm)
+REAL (KIND=DBL) snowt(nx,ny) ! show temperature (K)
+
+REAL (KIND=DBL), DIMENSION(nx,ny) :: vege_YES, & ! zero- for baresoil, 1-vegetated
+               cp_vege, &  ! heat capacity of vegetation
+               z0_sfc, &   ! surface level roughness for momentum
+               Khai_L, & ! leaf distribution factor
+               phi_1, &    ! 
+               phi_2, &    !
+               IR_emis_vege, & ! vegetation emissivity for infrared radiation
+               IR_emis_grnd, & ! ground emissivity for infrared radiation
+               ztop, &     ! height of vegetation
+               disp_hgt, & ! displacement height
+               Rgl, &  ! parameter for stomatal resistance
+               Rc_min, &   ! minimum stomatal resistance
+               hs_rc, &    ! parameter for stomatal resistance
+               rootL, &    ! root length
+               root_a , &  ! coef a for root density
+               root_b , &  ! coef b for root density
+               precip_extinc, & ! precipitation extinction coef.
+               mw_mx, &    ! max of mw
+               mws_mx, &   ! max of mws
+               BAI, &      ! Basal area index, sq.feet/acre
+               IMPERV      ! surface inmperviousness parameter (from 0 to 1, 1 - impervious surface)
+
+REAL (KIND=DBL), allocatable ::  rootF(:,:,:)   ! fraction of total root length of a vegetation in each soil layer:
+REAL (KIND=DBL), allocatable ::  w_s_FC(:,:,:)   ! wetness at field capacity
+REAL (KIND=DBL), allocatable ::  w_s_WP(:,:,:)  ! wetness at wilting point
+
+REAL (KIND=DBL) alpha(0:nsoil), beta(0:nsoil)
+
+! soil parameters 
+! read from input file 'soil' under the case directory
+REAL (KIND=DBL), allocatable ::  SAND(:,:,:)           ! sand percentage
+REAL (KIND=DBL), allocatable ::  CLAY(:,:,:)           ! clay percentage
+REAL (KIND=DBL), allocatable ::  s_depth(:,:,:)        ! thickness of each soil layer in meter	
+REAL (KIND=DBL), allocatable ::  soil_relax_hgt(:,:,:) ! depth dependent soil relaxation function
+
+REAL (KIND=DBL) tau_soil(nx,ny)   ! soil nudging time in seconds, for dosoiltnudging.or.dosoilwnudging = .true.
+
+! soil parameters calculated from SAND, CLAY
+REAL (KIND=DBL), DIMENSION(:,:,:), allocatable ::  &
+  sst_capa, & ! heat capacity for soil solids
+  sst_cond, & ! heat conductivity of soil solids
+  st_capa, & ! heat capacity of soil
+  st_cond, & ! heat conductivity off soil 
+  poro_soil, & ! saturation moisture content, porosity
+  theta_FC, &  ! volumetric moisture content at field capacity
+  theta_WP, &   ! Volumetric moisture content at wilting point
+  m_pot_sat, & ! moisture potential at saturation
+  Bconst, &  ! B constant
+  ks  ! Hydraulic Conductivity at saturation [m/s]
+REAL (KIND=DBL) soilw_inc_tot(nx,ny)
+
+! radiation
+REAL (KIND=DBL), DIMENSION(2) :: net_rad, net_lw, net_lwup, net_lwdn, net_sw, net_swup, net_swdn
+! resistances
+REAL (KIND=DBL) :: r_a, r_b, r_c, r_d, r_soil, r_litter
+
+! aerodynamic heat conductance
+REAL (KIND=DBL) :: cond_heat,  cond_href,  cond_hcnp,  cond_hundercnp
+
+! aerodynamic vapor conductance
+REAL (KIND=DBL) :: cond_vapor, cond_vref, cond_vcnp, cond_vundercnp
+
+REAL (KIND=DBL), DIMENSION(nx,ny) :: ustar,  tstar!
+REAL (KIND=DBL) :: mom_trans_coef, & ! surface momentum transfer coef.
+   heat_trans_coef, & ! surface heat transfer coef.
+   xsi, & ! M-O stability parameter
+   RiB, & ! bulk Richardson number
+   vel_m, & ! reference wind speed 
+   u_10m, & ! 10m zonal wind speed 
+   v_10m, & ! 10m meridional wind speed 
+   temp_2m, & ! 2m temperature 
+   q_2m ! 2m humidity 
+
+! surface momentum fluxes
+REAL (KIND=DBL) :: taux_sfc, tauy_sfc
+
+! 2D statistics variables
+REAL (KIND=DBL), DIMENSION(2,nx,ny) :: s_net_swup, s_net_lwup, s_net_rad
+REAL (KIND=DBL), DIMENSION(nx,ny) :: &
+     s_taux_sfc, & ! surface momentum flux in x directiron
+     s_tauy_sfc, & ! surface momentum flux in y direction
+     s_precip, & !precipitation intercepted by canopy
+     s_drain, & ! drainage rate from canopy
+     s_precip_sfc, & ! preciptation rate at the actual soil surface
+     s_ustar, & ! 
+     s_r_a, & ! resistance Ra
+     s_r_b, & ! resistance Rb
+     s_r_d, & ! resistance Rd
+     s_r_soil, & ! resistance Rsoil
+     s_r_c, & ! stomatal resistance
+     s_shf_canop, & ! sensible heat flux from leaf surface to air
+     s_shf_soil, & ! sensible heat flux from soil to air
+     s_shf_air, & ! sensible heat flux from air to ref. level
+     s_lhf_canop, & ! canopy latent heat flux (W/m2)
+     s_lhf_soil, & ! soil latent heat flux
+     s_lhf_air, & ! total latent heat flux
+     s_lhf_wet, & ! direct evaporation from water storage on leaves
+     s_lhf_tr, &  ! transpiration
+     s_fh, &  ! sol surface wetness
+     s_evp_canop, & ! canopy latent heat flux (W/m2)
+     s_evp_soil, & ! soil latent heat flux
+     s_evp_air, & ! total latent heat flux
+     s_evp_wet, & ! direct evaporation from water storage on leaves
+     s_evp_tr, &  ! transpiration
+     s_precip_ref,& ! reference level precipitation
+     s_precip_in,& ! precipitation infiltration rate 
+     s_run_off_sfc, & ! surface run off rate
+     s_drainage, & ! bottom soil layer drainage
+     s_tcnp, & ! canopy T
+     s_tcas,&
+     s_qcas,&
+     s_mw, &
+     s_mws, &
+     s_grflux0, &
+     s_RiB, &
+     s_LAI, &
+     s_Cveg ! canopy heat capacity
+
+REAL (KIND=DBL), DIMENSION(:,:,:), allocatable :: &
+  s_soilw, & ! soil wetness
+  s_soilw_nudge,& ! soil wetness nudging
+  s_soilt_nudge,& ! soil temperature nudging
+  s_soilt,&  ! soil temperature
+  s_scond,&  ! soil conductivity 
+  s_scapa    ! soil heat capacity
+
+! soil hydrology variables
+REAL (KIND=DBL) sh_eff_cond(nsoil-1), sh_eff_vel(nsoil-1)
+REAL (KIND=DBL) :: drainage_flux ! drainage from the bottom layer
+
+! variables for soil temperature calculations
+REAL (KIND=DBL) st_eff_cond(nsoil-1) ! effective soil thermal conductivity 
+REAL (KIND=DBL) :: grflux0  !heat flux at soil top
+
+
+REAL (KIND=DBL), DIMENSION(:,:,:), allocatable :: &
+ s_depth_mm, & ! thickness of each soil layer in mm
+ node_z, &  ! depth of the center of each soil layer
+ interface_z, & ! depth of soil layer interface
+ soilw_nudge, & ! nudging of soilw
+ soilt_nudge, & ! nudging of soilt
+ sw_over_sat ! soilw over saturation
+
+! Sensible heat fluxes
+REAL (KIND=DBL), DIMENSION(nx,ny):: &
+     shf_canop, & ! flux transfer between canopy and air space [W/m^2]
+     shf_soil , & ! flux transfer between soil surface and air space
+     shf_air      ! flux transfer between air space and the reference level
+
+! Latent heat fluxes
+REAL (KIND=DBL), DIMENSION(nx,ny) :: &
+     lhf_canop , & ! flux transfer between canopy and air space W/m2
+     lhf_soil, &  !(W/m2)
+     lhf_air, &   ! flux transfer between air space to the reference level (W/m2)
+     evp_canop, & ! flux transfer between canopy and air space (kg/m2/s)
+     evp_soil, &  ! (kg/m2/s)
+     evp_air      ! flux transfer between air space to the reference level (kg/m2/s)
+REAL (KIND=DBL):: &
+      evapo_dry , & ! transpiration rate kg/m2/s = mm/s
+      evapo_wet , & ! direct evaporation rate from 'mw'
+      evapo_s, &! direct evaporation from soil top
+      fh       ! soil surface weteness [0-1]
+
+! Storage for initial soilT and soilW for soil nudging
+REAL (KIND=DBL), allocatable ::  soilt_obs(:,:,:) ! profile of temperature to nudge to
+REAL (KIND=DBL), allocatable ::  soilw_obs(:,:,:) ! profile of wetness to nudge to
+
+REAL (KIND=DBL), DIMENSION(nx,ny) :: albedovis_v, albedonir_v ! vis and nir albedos for vegatation
+REAL (KIND=DBL), DIMENSION(nx,ny) :: albedovis_s, albedonir_s ! vis and nir albedos for soil
+
+REAL (KIND=DBL) :: &
+   precip, & !precipitation rate intercepted by vegetation layer, mm/s
+   drain, &! drainage rate from 1st vegetation layer
+   precip_sfc,& !precipitation rate reaching to soil surface
+   precip_in,& ! rain infiltration rate [kg/m^2/s]
+   wet_canop,& ! wetted fraction of canopy
+   run_off_sfc,& !surface  run off rate [kg/m^2/s=mm/s]
+   cnp_mw_drip ! drip from leaves
+REAL (KIND=DBL) :: &
+   q_gr,& ! q at ground
+   qsat_canop,&! sat. q for t_canop and p_ref
+   qsat_skin  ! sat. q for soil surface
+
+
+REAL (KIND=DBL) :: soilvwc
+
+real iceobs(nx,ny,2) ! prescribed icemask
+real dayiceobs(2) ! time arrays (days)
+real LAIobs(nx,ny,2) ! prescribed LAI
+real dayLAIobs(2) ! time arrays (days)
+real snowdobs(nx,ny,2) ! prescribed snowdepth
+real snowtobs(nx,ny,2) ! prescribed snow temperature
+real daysnowobs(2) ! time arrays (days)
+
+CONTAINS
+
+!================================================================================
+!================================================================================
+!================================================================================
+
+SUBROUTINE slm_init
+
+! Initialize vegetation and soil parameters  from the value read from prm
+! Assign soil depth
+! Assign vegetation root fractions in each soil layer
+
+use grid, only: day0, z
+use vars, only: sstxy, t00, sstxy0, tabs0
+use terrain, only: k_terra
+use params, only: dofcast_ice, docyclic
+
+IMPLICIT NONE
+
+INTEGER i,j,k,it,jt,nx1,ny1,nsoil1,iz
+real field(nx,ny,2)
+real days(2),coef
+real(4), allocatable ::  fld(:,:)
+real(4), allocatable :: zsoil(:), flds(:,:,:)
+real(8) day1
+integer stat,stat1
+logical flag
+
+ 
+if(.not.SLM) return
+
+if(masterproc) print*,'initializing SLM...'
+call slm_setparm()
+if(masterproc) print*,'finished reading SLM namelist...'
+
+stat1 = 0
+allocate(soilt(nsoil,nx,ny),stat=stat); stat1=stat1+stat
+allocate(soilw(nsoil,nx,ny),stat=stat); stat1=stat1+stat
+allocate(w_s_WP(nsoil,nx,ny),stat=stat); stat1=stat1+stat
+allocate(w_s_FC(nsoil,nx,ny),stat=stat); stat1=stat1+stat
+allocate(rootF(nsoil,nx,ny),stat=stat); stat1=stat1+stat
+allocate(SAND(nsoil,nx,ny),stat=stat); stat1=stat1+stat
+allocate(CLAY(nsoil,nx,ny),stat=stat); stat1=stat1+stat
+allocate(s_depth(nsoil,nx,ny),stat=stat); stat1=stat1+stat
+allocate(soil_relax_hgt(nsoil,nx,ny),stat=stat); stat1=stat1+stat
+allocate(sst_capa(nsoil,nx,ny),stat=stat); stat1=stat1+stat
+allocate(sst_cond(nsoil,nx,ny),stat=stat); stat1=stat1+stat
+allocate(st_capa(nsoil,nx,ny),stat=stat); stat1=stat1+stat
+allocate(st_cond(nsoil,nx,ny),stat=stat); stat1=stat1+stat
+allocate(poro_soil(nsoil,nx,ny),stat=stat); stat1=stat1+stat
+allocate(theta_FC(nsoil,nx,ny),stat=stat); stat1=stat1+stat
+allocate(theta_WP(nsoil,nx,ny),stat=stat); stat1=stat1+stat
+allocate(m_pot_sat(nsoil,nx,ny),stat=stat); stat1=stat1+stat
+allocate(Bconst(nsoil,nx,ny),stat=stat); stat1=stat1+stat
+allocate(ks(nsoil,nx,ny),stat=stat); stat1=stat1+stat
+allocate(s_soilw(nsoil,nx,ny),stat=stat); stat1=stat1+stat
+allocate(s_soilw_nudge(nsoil,nx,ny),stat=stat); stat1=stat1+stat
+allocate(s_soilt_nudge(nsoil,nx,ny),stat=stat); stat1=stat1+stat
+allocate(s_soilt(nsoil,nx,ny),stat=stat); stat1=stat1+stat
+allocate(s_scond(nsoil,nx,ny),stat=stat); stat1=stat1+stat
+allocate(s_scapa(nsoil,nx,ny),stat=stat); stat1=stat1+stat
+allocate(s_depth_mm(nsoil,nx,ny),stat=stat); stat1=stat1+stat
+allocate(node_z(nsoil,nx,ny),stat=stat); stat1=stat1+stat
+allocate(interface_z(nsoil,nx,ny),stat=stat); stat1=stat1+stat
+allocate(soilw_nudge(nsoil,nx,ny),stat=stat); stat1=stat1+stat
+allocate(soilt_nudge(nsoil,nx,ny),stat=stat); stat1=stat1+stat
+allocate(sw_over_sat(nsoil,nx,ny),stat=stat); stat1=stat1+stat
+allocate(soilt_obs(nsoil,nx,ny),stat=stat); stat1=stat1+stat
+allocate(soilw_obs(nsoil,nx,ny),stat=stat); stat1=stat1+stat
+if(stat1.gt.0) call task_abort_msg("slm_init: allocation of arrays failed!")
+call task_barrier()
+
+call slm_stat_2Dinit()
+
+if(readland) then
+  call readsurface(landtypefile,field,days)
+  landtype(:,:) = field(:,:,1)
+  ! assume that the LAI dataset is always cyclic - MK
+  flag = docyclic
+  docyclic = .true.
+  call readsurface(LAIfile,LAIobs,dayLAIobs)
+  docyclic = flag
+  if(dayLAIobs(2).eq.0) then
+     LAI(:,:) = LAIobs(:,:,1)
+  else
+     coef=(day-dayLAIobs(1))/(dayLAIobs(2)-dayLAIobs(1))
+     LAI(:,:) = LAIobs(:,:,1)+coef*(LAIobs(:,:,2)-LAIobs(:,:,1))
+  end if
+else
+  landtype(:,:) = landtype0
+  LAI(:,:) = LAI0
+end if
+if(readseaice) then
+   if(dofcast_ice) then
+     day1 = day
+     day = day0
+   end if
+   call readsurface(seaicefile,iceobs,dayiceobs)
+   if(dayiceobs(2).eq.0) then
+      seaicemask(:,:) = nint(iceobs(:,:,1))
+   else
+      coef=(day-dayiceobs(1))/(dayiceobs(2)-dayiceobs(1))
+      seaicemask(:,:) = nint(iceobs(:,:,1)+coef*(iceobs(:,:,2)-iceobs(:,:,1)))
+   end if
+   where(landmask.eq.1) seaicemask = 0
+   if(dofcast_ice) day = day1
+else
+   seaicemask = 0.
+end if
+
+dtn_dbl = dtn
+
+do j=1,ny 
+ do i=1,nx
+
+  if(landmask(i,j).eq.1) then
+
+     select case(landtype(i,j))
+
+! properties according to IGBP class
+! vegetation albedoes were tuned to broadly reproduce CERES albedos for various land types
+! soil albedos also from CLM type 16
+! roughness lengthes from http://journals.ametsoc.org/doi/full/10.1175/JHM536.1
+! Also, rougness length is based on Army Research Lab Report by Frank Hansen 1993
+! Later some z0 are taken forllowing IFS model
+! Overall, it is not sattled.
+! Root parameters (rootL,root_a,root_b) from Zeng (J. Hydromet Oct 2001)
+
+     case (1) ! evergreen needleaf forest
+                         albedovis_v(i,j) =  0.094
+                         albedonir_v(i,j) =  0.161
+                         albedovis_s(i,j) = albvis_soil
+                         albedonir_s(i,j) = albnir_soil
+                         ztop(i,j) = 20.
+                         disp_hgt(i,j) = min(0.4*z(1),0.65*ztop(i,j))
+                         z0_sfc(i,j) = 0.5
+                         Khai_L(i,j) = 0.25
+                         rootL(i,j) = 1.8
+                         root_a(i,j) = 6.706
+                         root_b(i,j) = 2.175
+                         Rc_min(i,j) = 250.
+                         Rgl(i,j) = 120.
+                     !    Rgl(i,j) = 30.
+                         hs_rc(i,j) = 0.03   
+                         BAI(i,j) = 200.
+                         IMPERV(i,j) = 0.
+                         vegetated(i,j)=.true.
+     case (2) ! evergreen broadleaf forest
+                         albedovis_v(i,j) =  0.086
+                         albedonir_v(i,j) =  0.146
+                         albedovis_s(i,j) = albvis_soil
+                         albedonir_s(i,j) = albnir_soil
+                         ztop(i,j) = 20.
+                         disp_hgt(i,j) = min(0.4*z(1),0.65*ztop(i,j))
+                         z0_sfc(i,j) = 0.5
+                         Khai_L(i,j) = 0.25
+                         rootL(i,j) = 3.0
+                         root_a(i,j) = 7.344
+                         root_b(i,j) = 1.303
+                         Rc_min(i,j) = 250.
+                         Rgl(i,j) = 120.
+                         hs_rc(i,j) = 0.03  
+                         BAI(i,j) = 200.
+                         IMPERV(i,j) = 0.
+                         vegetated(i,j)=.true.
+     case (3) ! deciduous needleaf forest
+                         albedovis_v(i,j) =  0.102
+                         albedonir_v(i,j) =  0.198
+                         albedovis_s(i,j) = albvis_soil
+                         albedonir_s(i,j) = albnir_soil
+                         ztop(i,j) = 20.
+                         disp_hgt(i,j) = min(0.4*z(1),0.65*ztop(i,j))
+                         z0_sfc(i,j) = 0.5
+                         Khai_L(i,j) = 0.25
+                         rootL(i,j) = 2.0
+                         root_a(i,j) = 7.066
+                         root_b(i,j) = 1.953
+                         Rc_min(i,j) = 250.
+                         Rgl(i,j) = 120.
+                         hs_rc(i,j) = 0.03
+                         BAI(i,j) = 200.
+                         IMPERV(i,j) = 0.
+                         vegetated(i,j)=.true.
+     case (4) ! deciduous broadleaf forest
+                         albedovis_v(i,j) =  0.056
+                         albedonir_v(i,j) =  0.151
+                         albedovis_s(i,j) = albvis_soil
+                         albedonir_s(i,j) = albnir_soil
+                         ztop(i,j) = 20.
+                         disp_hgt(i,j) = min(0.4*z(1),0.65*ztop(i,j))
+                         z0_sfc(i,j) = 0.5
+                         Khai_L(i,j) = 0.25
+                         rootL(i,j) = 2.0
+                         root_a(i,j) = 5.990
+                         root_b(i,j) = 1.955
+                         Rc_min(i,j) = 250.
+                         Rgl(i,j) = 120.
+                         hs_rc(i,j) = 0.03
+                         BAI(i,j) = 200.
+                         IMPERV(i,j) = 0.
+                         vegetated(i,j)=.true.
+     case (5) ! mixed forest
+                         albedovis_v(i,j) =  0.093
+                         albedonir_v(i,j) =  0.179
+                         albedovis_s(i,j) = albvis_soil
+                         albedonir_s(i,j) = albnir_soil
+                         ztop(i,j) = 20.
+                         disp_hgt(i,j) = min(0.4*z(1),0.65*ztop(i,j))
+                         z0_sfc(i,j) = 0.3
+                         Khai_L(i,j) = 0.25
+                         rootL(i,j) = 2.4
+                         root_a(i,j) = 4.453
+                         root_b(i,j) = 1.631
+                         Rc_min(i,j) = 250.
+                         Rgl(i,j) = 120.
+                         hs_rc(i,j) = 0.03
+                         BAI(i,j) = 200.
+                         IMPERV(i,j) = 0.
+                         vegetated(i,j)=.true.
+     case (6) ! closed shrublands
+                         albedovis_v(i,j) =  0.069
+                         albedonir_v(i,j) =  0.121
+                         albedovis_s(i,j) = albvis_soil
+                         albedonir_s(i,j) = albnir_soil
+                         ztop(i,j) = 1.
+                         disp_hgt(i,j) = min(0.4*z(1),0.65*ztop(i,j))
+                         z0_sfc(i,j) = 0.1
+                         Khai_L(i,j) = 0.25
+                         rootL(i,j) = 2.5
+                         root_a(i,j) = 6.326
+                         root_b(i,j) = 1.567
+                         Rc_min(i,j) = 220.
+                         Rgl(i,j) = 100.
+                         hs_rc(i,j) = 0.01
+                         BAI(i,j) = 60.
+                         IMPERV(i,j) = 0.
+                         vegetated(i,j)=.true.
+     case (7) ! open shrublands
+                         albedovis_v(i,j) =  0.079
+                         albedonir_v(i,j) =  0.226
+                         albedovis_s(i,j) = albvis_soil
+                         albedonir_s(i,j) = albnir_soil
+                         ztop(i,j) = 1.
+                         disp_hgt(i,j) = min(0.4*z(1),0.65*ztop(i,j))
+                         z0_sfc(i,j) = 0.1
+                         Khai_L(i,j) = 0.25
+                         rootL(i,j) = 3.1
+                         root_a(i,j) = 7.718
+                         root_b(i,j) = 1.262
+                         Rc_min(i,j) = 220.
+                         Rgl(i,j) = 100.
+                         hs_rc(i,j) = 0.01
+                         BAI(i,j) = 60.
+                         IMPERV(i,j) = 0.
+                         vegetated(i,j)=.true.
+     case (8) ! woody savannas
+                         albedovis_v(i,j) =  0.071
+                         albedonir_v(i,j) =  0.085
+                         albedovis_s(i,j) = albvis_soil
+                         albedonir_s(i,j) = albnir_soil
+                         ztop(i,j) = 5.
+                         disp_hgt(i,j) = min(0.4*z(1),0.65*ztop(i,j))
+                         z0_sfc(i,j) = 0.05
+                         Khai_L(i,j) = 0.25
+                         rootL(i,j) = 1.7
+                         root_a(i,j) = 7.604
+                         root_b(i,j) = 2.300
+                         Rc_min(i,j) = 180.
+                         Rgl(i,j) = 100.
+                         hs_rc(i,j) = 0.02
+                         BAI(i,j) = 100.
+                         IMPERV(i,j) = 0.
+                         vegetated(i,j)=.true.
+     case (9) ! savannas
+                         albedovis_v(i,j) =  0.061
+                         albedonir_v(i,j) =  0.227
+                         albedovis_s(i,j) = albvis_soil
+                         albedonir_s(i,j) = albnir_soil
+                         ztop(i,j) = 5.
+                         disp_hgt(i,j) = min(0.4*z(1),0.65*ztop(i,j))
+                         z0_sfc(i,j) = 0.15
+                         Khai_L(i,j) = 0.25
+                         rootL(i,j) = 2.4
+                         root_a(i,j) = 8.235
+                         root_b(i,j) = 1.627
+                         Rc_min(i,j) = 100.
+                         Rgl(i,j) = 100.
+                         hs_rc(i,j) = 0.01
+                         BAI(i,j) = 100.
+                         IMPERV(i,j) = 0.
+                         vegetated(i,j)=.true.
+     case (10) ! grasslands
+                         albedovis_v(i,j) =  0.090
+                         albedonir_v(i,j) =  0.269
+                         albedovis_s(i,j) = albvis_soil
+                         albedonir_s(i,j) = albnir_soil
+                         ztop(i,j) = 0.5
+                         disp_hgt(i,j) = min(0.4*z(1),0.65*ztop(i,j))
+                         z0_sfc(i,j) = 0.04
+                         Khai_L(i,j) = -0.3
+                         rootL(i,j) = 1.5
+                         root_a(i,j) = 10.74
+                         root_b(i,j) = 2.608
+                         Rc_min(i,j) = 100.
+                         Rgl(i,j) = 100.
+                         hs_rc(i,j) = 0.01
+                         BAI(i,j) = 20.
+                         IMPERV(i,j) = 0.
+                         vegetated(i,j)=.true.
+     case (11) ! permanent wetlands
+                         albedovis_v(i,j) =  0.081
+                         albedonir_v(i,j) =  0.180
+                         albedovis_s(i,j) = albvis_soil
+                         albedonir_s(i,j) = albnir_soil
+                         ztop(i,j) = 0.5
+                         disp_hgt(i,j) = min(0.4*z(1),0.65*ztop(i,j))
+                         z0_sfc(i,j) = 0.2
+                         Khai_L(i,j) = -0.3
+                         rootL(i,j) = 1.5
+                         root_a(i,j) = 5.558
+                         root_b(i,j) = 2.614
+                         Rc_min(i,j) = 100.
+                         Rgl(i,j) = 100.
+                         hs_rc(i,j) = 0.01
+                         BAI(i,j) = 20.
+                         IMPERV(i,j) = 0.
+                         vegetated(i,j)=.true.
+     case (12) ! croplands
+                         albedovis_v(i,j) =  0.084
+                         albedonir_v(i,j) =  0.193
+                         albedovis_s(i,j) = albvis_soil
+                         albedonir_s(i,j) = albnir_soil
+                         ztop(i,j) = 0.5
+                         disp_hgt(i,j) = min(0.4*z(1),0.65*ztop(i,j))
+                         z0_sfc(i,j) = 0.03
+                         Khai_L(i,j) = -0.3
+                         rootL(i,j) = 1.5
+                         root_a(i,j) = 5.558
+                         root_b(i,j) = 2.614
+                         Rc_min(i,j) = 100.
+                         Rgl(i,j) = 100.
+                         hs_rc(i,j) = 0.01
+                         BAI(i,j) = 60.
+                         IMPERV(i,j) = 0.
+                         vegetated(i,j)=.true.
+     case (13) ! urban
+                         LAI(i,j) = 0.
+                         albedovis_v(i,j) =  0.102
+                         albedonir_v(i,j) =  0.164
+                         albedovis_s(i,j) = albvis_urban
+                         albedonir_s(i,j) = albnir_urban
+                         ztop(i,j) = 10.
+                         disp_hgt(i,j) = min(0.4*z(1),0.65*ztop(i,j))
+                         z0_sfc(i,j) = 0.5
+                         Khai_L(i,j) = -0.3
+                         rootL(i,j) = 1.5
+                         root_a(i,j) = 5.558
+                         root_b(i,j) = 2.614
+                         Rc_min(i,j) = 0.
+                         Rgl(i,j) = 0.
+                         hs_rc(i,j) = 0.
+                         BAI(i,j) = 0.
+                         IMPERV(i,j) = 0.75
+                         vegetated(i,j)=.false.
+     case (14) ! croplands/natural mozaics
+                         albedovis_v(i,j) =  0.071
+                         albedonir_v(i,j) =  0.169
+                         albedovis_s(i,j) = albvis_soil
+                         albedonir_s(i,j) = albnir_soil
+                         ztop(i,j) = 0.5
+                         disp_hgt(i,j) = min(0.4*z(1),0.65*ztop(i,j))
+                         z0_sfc(i,j) = 0.04
+                         Khai_L(i,j) = -0.3
+                         rootL(i,j) = 1.5
+                         root_a(i,j) = 5.558
+                         root_b(i,j) = 2.614
+                         Rc_min(i,j) = 100.
+                         Rgl(i,j) = 100.
+                         hs_rc(i,j) = 0.01
+                         BAI(i,j) = 20.
+                         IMPERV(i,j) = 0.
+                         vegetated(i,j)=.true.
+     case (15) ! snow/ice/glaciers
+                         LAI(i,j) = 0.
+                         albedovis_v(i,j) = 0. 
+                         albedonir_v(i,j) = 0.
+                         albedovis_s(i,j) = albvis_ice
+                         albedonir_s(i,j) = albnir_ice
+                         ztop(i,j) = 0.
+                         z0_sfc(i,j) = z0_ice
+                         disp_hgt(i,j) = 0. 
+                         Khai_L(i,j) = 0.
+                         rootL(i,j) = 0.
+                         root_a(i,j) = 0.
+                         root_b(i,j) = 0.
+                         Rc_min(i,j) = 0.
+                         Rgl(i,j) = 0.
+                         hs_rc(i,j) = 0.
+                         BAI(i,j) = 0.
+                         IMPERV(i,j) = 0.
+                         vegetated(i,j)=.false.
+     case (16) ! baresoil
+                         LAI(i,j) = 0.
+                         albedovis_v(i,j) = 0. 
+                         albedonir_v(i,j) = 0.
+                         albedovis_s(i,j) = albvis_soil
+                         albedonir_s(i,j) = albnir_soil
+                         ztop(i,j) = 0.
+                         disp_hgt(i,j) = 0. 
+                         z0_sfc(i,j) = z0_soil
+                         Khai_L(i,j) = 0.
+                         rootL(i,j) = 0.
+                         root_a(i,j) = 0.
+                         root_b(i,j) = 0.
+                         Rc_min(i,j) = 0.
+                         Rgl(i,j) = 0.
+                         hs_rc(i,j) = 0.
+                         BAI(i,j) = 0.
+                         IMPERV(i,j) = 0.
+                         vegetated(i,j)=.false.
+ ! Specail case for tests:
+          case (55) ! baresoil
+                         LAI(i,j) = 0.
+                         albedovis_v(i,j) = 0.
+                         albedonir_v(i,j) = 0.
+                         albedovis_s(i,j) = 0.
+                         albedonir_s(i,j) = 0.
+                         ztop(i,j) = 0.
+                         disp_hgt(i,j) = 0.
+                         z0_sfc(i,j) = z0_soil
+                         Khai_L(i,j) = 0.
+                         rootL(i,j) = 0.
+                         root_a(i,j) = 0.
+                         root_b(i,j) = 0.
+                         Rc_min(i,j) = 0.
+                         Rgl(i,j) = 0.
+                         hs_rc(i,j) = 0.
+                         BAI(i,j) = 0.
+                         IMPERV(i,j) = 0.
+                         vegetated(i,j)=.false.
+     case default
+        print*,'Error in slm_init! rank=',rank,' i,j=',i,j,'landmask=1 but landtype is',landtype(i,j)
+        call task_abort()
+     end select 
+
+   else 
+       ! used for seaice
+                         LAI(i,j) = 0.
+                         albedovis_v(i,j) = 0. 
+                         albedonir_v(i,j) = 0.
+                         albedovis_s(i,j) = 0.7
+                         albedonir_s(i,j) = 0.5
+                       !  albedovis_s(i,j) = 0.95
+                       !  albedonir_s(i,j) = 0.65
+                         ztop(i,j) = 0.
+                         z0_sfc(i,j) = 0.01
+                         disp_hgt(i,j) = 0.
+                         Khai_L(i,j) = 0.
+                         rootL(i,j) = 0.
+                         root_a(i,j) = 0.
+                         root_b(i,j) = 0.
+                         Rc_min(i,j) = 0.
+                         Rgl(i,j) = 0.
+                         hs_rc(i,j) = 0.
+                         BAI(i,j) = 0.
+                         IMPERV(i,j) = 0.
+                         vegetated(i,j)=.false.
+   end if ! landmask
+ end do
+end do
+
+vege_YES = 1._DBL ! 1-vegetated, 0-non vegetated
+WHERE(.not.vegetated) vege_YES = 0._DBL
+
+WHERE(vegetated) LAI=max(LAI,LAI_min)
+
+landicemask = 0 ! 1-glacier/ice, 0-no ice
+WHERE(landtype.eq.15)  landicemask = 1
+icemask=0
+WHERE(landicemask.eq.1.or.seaicemask.eq.1)  icemask = 1
+
+DO j = 1,ny
+ DO i = 1,nx
+   phi_1(i,j) = 0.5_DBL-0.633_DBL*khai_L(i,j)-0.33_DBL*(khai_L(i,j))**2
+   phi_2(i,j) = 0.877_DBL*(1._DBL-2._DBL*phi_1(i,j))
+   precip_extinc(i,j) = phi_1(i,j) + phi_2(i,j) ! precipitation extinction coefficient
+   IR_emis_vege(i,j) = (1._DBL-exp(-(phi_1(i,j)+phi_2(i,j))*LAI(i,j)))*IR_emis_leaf    
+ ! maximum water storage on leaves ; equivalent with 0.1mm of water
+ !  mw_mx(i,j) = 0.1_DBL*LAI(i,j) 
+ !  add the  basal area as well - MK 2023
+ ! circumference of trunks per unit area = sqrt(4 PI * basel area)
+ ! The latter is conveerted from sq.feet/sq acre to m2/m2 by dividing by 43560.
+   mw_mx(i,j) = 0.1_DBL*LAI(i,j) + ztop(i,j)*sqrt(4*3.14*BAI(i,j)/43560.) 
+ end do
+end do
+mws_mx = mws_mx0 ! maximum puddle water storage 
+!-----------------------------------------
+! Imperviousness: Marat 08/21
+! overwrite impervousness
+if(readimperv) then
+  call readsurface(impervfile,field,days)
+  where(landtype(:,:).ne.0) IMPERV(:,:) = field(:,:,1)
+else
+  if(IMPERV0.gt.0.) IMPERV(:,:) = IMPERV0
+end if
+
+!============= Initialize soil parameters ====================================!
+call init_soil_tw
+call init_soil_par
+
+DO j = 1,ny
+ DO i = 1,nx
+  if(landtype(i,j).eq.13) then
+   IR_emis_grnd(i,j) = IR_emis_urban*IMPERV(i,j)+IR_emis_soil*(1.-IMPERV(i,j)) ! urban IR emissivity
+  else
+   IR_emis_grnd(i,j) = IR_emis_soil ! Soil IR emissivity
+  end if
+ end do
+end do
+
+! Calculate fraction of root in each soil layer
+call vege_root_init()
+
+if(nrestart.eq.0) then
+
+  ! Initialize soil layer temperature and water
+
+  if(readinitsoil) then
+    call task_rank_to_index(rank,it,jt)
+    if(masterproc) print*,'reading soil initial profiles from ',trim(soilinitfile)
+    open(11,file=trim(soilinitfile),status='old',form='unformatted')
+    read(11) nsoil1
+    read(11) nx1
+    read(11) ny1
+    if(nx1.ne.nx_gl.or.ny1.ne.ny_gl) then
+      if(masterproc) print*,'dimensions of soil domain in file '//trim(soilfile)//' is ' // &
+              'different from model domain size: nx=',nx1, &
+              ' ny=',ny1,'  Quitting...'
+      call task_abort()
+    end if
+    allocate(zsoil(0:nsoil1),stat=stat); if(stat.gt.0) call task_abort_msg("slm_init: alloc zsoil failed!")
+    allocate(flds(0:nsoil1,nx,ny),stat=stat); if(stat.gt.0) call task_abort_msg("slm_init: alloc flds failed!")
+    read(11) zsoil(1:nsoil1)
+    if(zsoil(1).lt.0.) zsoil(1:nsoil1)=node_z(:,1,1)
+    zsoil(0) = 0.
+    if(masterproc) then
+     print*,'number of soil layer in soil dataset:',nsoil1
+     do k=1,nsoil1
+        print*,'depth of level ',k,': ',zsoil(k)
+     end do
+    end if
+    allocate (fld(1:nx_gl,1:ny_gl),stat=stat); if(stat.gt.0) call task_abort_msg("slm_init: alloc fld failed!")
+    if(masterproc) print*,'Reading soil data: temperature'
+    if(masterproc) print*,'layer    min   max'
+    do k=1,nsoil1
+      read(11) fld(1:nx_gl,1:ny_gl)
+      flds(k,1:nx,1:ny) = fld(1+it:nx+it,1+jt:ny+jt)
+      if(masterproc) print*,k,minval(fld(1:nx_gl,1:ny_gl)),maxval(fld(1:nx_gl,1:ny_gl))
+    end do
+    flds(0,1:nx,1:ny) = flds(1,1:nx,1:ny)
+    do j=1,ny
+     do i=1,nx
+        do k=1,nsoil
+          do iz = 1,nsoil1
+            if(node_z(k,i,j).le.zsoil(iz)) then
+              soilt(k,i,j)=flds(iz-1,i,j)+(flds(iz,i,j)-flds(iz-1,i,j)) &
+                           /(zsoil(iz)-zsoil(iz-1))*(node_z(k,i,j)-zsoil(iz-1))
+              exit
+            else
+              soilt(k,i,j) = flds(iz,i,j)
+            end if
+          end do
+          if(landicemask(i,j).eq.1) soilt(k,i,j)=min(soilt(k,i,j),tfriz)
+          if(seaicemask(i,j).eq.1) soilt(k,i,j)=min(sstxy0(i,j),tfriz)+(tfriz-min(sstxy0(i,j),tfriz)) &
+                           /(node_z(nsoil,i,j)-node_z(1,i,j))*(node_z(k,i,j)-node_z(1,i,j))
+        end do
+     end do
+    end do
+    if(masterproc) print*,'Reading soil data: moisture'
+    if(masterproc) print*,'layer    min   max'
+    do k=1,nsoil1
+      read(11) fld(1:nx_gl,1:ny_gl)
+      flds(k,1:nx,1:ny) = fld(1+it:nx+it,1+jt:ny+jt)
+      if(masterproc) print*,k,minval(fld(1:nx_gl,1:ny_gl)),maxval(fld(1:nx_gl,1:ny_gl))
+    end do
+    flds(0,1:nx,1:ny) = flds(1,1:nx,1:ny)
+    do j=1,ny
+     do i=1,nx
+      if(landmask(i,j).eq.1.and.landicemask(i,j).eq.0) then
+       do k=1,nsoil
+         do iz = 1,nsoil1
+           if(node_z(k,i,j).le.zsoil(iz)) then
+             soilw(k,i,j)=flds(iz-1,i,j)+(flds(iz,i,j)-flds(iz-1,i,j)) &
+                        /(zsoil(iz)-zsoil(iz-1))*(node_z(k,i,j)-zsoil(iz-1))
+             exit
+           else
+             soilw(k,i,j) = flds(iz,i,j)
+           end if
+         end do
+!        soilw(k,i,j) = soilw(k,i,j)*(theta_FC(k,i,j) - theta_WP(k,i,j))+theta_WP(k,i,j)
+         if(soilw(k,i,j).ge.0.) then
+           soilw(k,i,j) = min(1.,soilw(k,i,j)/poro_soil(k,i,j))  ! convert from volumetric content to wetness
+         else
+           soilw(k,i,j) = max(0.,min(1.,-soilw(k,i,j)))  ! if soilw in dataset is negative, it is already wetness
+         end if
+        end do
+      else
+       soilw(:,i,j) = 0.
+      end if
+     end do
+    end do
+    close(11)
+    ! convert from soil index to volumetric soil content:
+    call fminmax_print('soilt',real(soilt),1,nx,1,ny,nsoil)
+    call fminmax_print('soilw',real(soilw),1,nx,1,ny,nsoil)
+    deallocate(zsoil,flds)
+    deallocate(fld)
+  end if ! readinitsoil
+
+  ! if input profile in 'soil' file is volumetric content, not wetness,
+  ! convert to soil wetness:
+  if(.not.readinitsoil.and.dosoilvolumetric) then
+    soilw(:,:,:) = soilw(:,:,:)/poro_soil(:,:,:)
+  end if
+
+! make saturated soil for wetland type
+  do j=1,ny
+   do i=1,nx
+    if(landtype(i,j).eq.11 ) then  
+     soilw(:,i,j) = w_s_FC(:,i,j)
+    end if
+   end do
+  end do
+
+  if(readsnow) then
+    call readsurface(snowfile,snowdobs,daysnowobs)
+    if(daysnowobs(2).eq.0) then
+      snow_mass(:,:) = snowdobs(:,:,1)*rho_snow
+    else
+      coef=(day-daysnowobs(1))/(daysnowobs(2)-daysnowobs(1))
+      snow_mass(:,:) = (snowdobs(:,:,1)+coef*(snowdobs(:,:,2)-snowdobs(:,:,1)))*rho_snow
+    end if
+    where(landmask.ne.1.or.icemask.eq.1.) snow_mass = 0.
+  else
+    snow_mass(:,:) = snow0*rho_snow
+  end if
+  if(readsnowt) then
+    call readsurface(snowtfile,snowtobs,daysnowobs)
+    if(daysnowobs(2).eq.0) then
+      snowt(:,:) = snowtobs(:,:,1)
+    else
+      coef=(day-daysnowobs(1))/(daysnowobs(2)-daysnowobs(1))
+      snowt(:,:) = (snowtobs(:,:,1)+coef*(snowtobs(:,:,2)-snowtobs(:,:,1)))
+    end if
+    where(landmask.ne.1.or.icemask.eq.1.) snowt = min(tfriz,soilt(1,:,:))
+  else
+    if(snowt0.eq.0.) then
+        snowt(:,:) = min(tfriz,soilt(1,:,:))
+    else
+        snowt(:,:) = snowt0
+    end if
+  end if
+
+  ! default ndging profiles are just initial 
+  soilt_obs(:,:,:) = soilt(:,:,:)
+  soilw_obs(:,:,:) = soilw(:,:,:)
+
+  do j=1,ny
+   do i=1,nx
+    if(landmask(i,j).eq.1) then
+      if(snow_mass(i,j).gt.0.) then
+       sstxy(i,j) = snowt(i,j) - t00
+      else
+       sstxy(i,j) = soilt(1,i,j) - t00
+      end if
+    end if 
+   end do
+  end do
+
+  call slm_write2Dinv()
+
+else
+
+  ! read restart file
+
+  call read_statement_slm()
+
+  if(masterproc) write(*,*) 'restart SLM time step at:', nstep
+
+  call fminmax_print_slm('canopT:', real(t_canop), 1,nx, 1,ny,.true.)
+  call fminmax_print_slm('casT:', real(t_cas), 1,nx, 1,ny,.true.)
+  call fminmax_print_slm('casQ:', real(q_cas), 1,nx, 1,ny,.true.)
+  call fminmax_print_slm('mw(mm):', real(mw), 1,nx, 1,ny)
+  call fminmax_print_slm('mws(mm):', real(mws), 1,nx, 1,ny)
+
+end if ! nrestart.eq.0
+
+call fminmax_print_slm('soil T top:',real(soilt(1,:,:)),1,nx,1,ny)
+call fminmax_print_slm('soil T deep:',real(soilt(nsoil,:,:)),1,nx,1,ny)
+call fminmax_print_slm('soil wetness top:',real(soilw(1,:,:)),1,nx,1,ny)
+call fminmax_print_slm('soil wetness deep:',real(soilw(nsoil,:,:)),1,nx,1,ny)
+call fminmax_print_slm('snow_depth(m):', real(snow_mass/rho_snow), 1,nx, 1,ny)
+call fminmax_print_slm('snow_temp(K):', real(snowt), 1,nx, 1,ny)
+
+soilw_nudge = 0._DBL
+soilt_nudge = 0._DBL
+
+END SUBROUTINE slm_init
+
+!================================================================================
+!================================================================================
+!================================================================================
+
+SUBROUTINE slm_setparm
+implicit none
+INTEGER ios
+CHARACTER(LEN=80) :: msg
+
+NAMELIST /SLM/dosoilwnudging,dosoiltnudging,tausoil,readland,landtype0,LAI0,snow0,snowt0,readsoil, &
+                       readinitsoil,soilinitfile,landtypefile,readseaice,seaicefile, &
+                       readsnow,readsnowt,snowfile,snowtfile,LAIfile,soilfile, &
+                       clay0,sand0,soilt0,soilw0, &
+                       readimperv,impervfile,dooutthermal,IMPERV0,dosoilvolumetric, &
+                       dorunoff
+
+! READ in from prm
+open(55, file='./CASES/'//trim(case)//'/prm',status='old',form='formatted')
+read(55,SLM,IOSTAT=ios,IOMSG=msg)     
+if(ios.gt.0) then
+  write(*,*) '***** ERROR : bad specification in SLM namelist for the reason of', TRIM(msg)
+  call task_abort()
+else if(ios.lt.0) then
+  write(*,*) '****** SLM is not activated in prm : make sure that SLM is not being used for ', trim(case), ' case'
+end if
+close(55)
+if(masterproc) then
+      open(unit=55,file='./OUT_STAT/'//trim(case)//'_'//trim(caseid)//'.nml',&
+            form='formatted',position='append')
+      write (55,nml=SLM)
+      write(55,*)
+      close(55)
+end if
+if(masterproc) then
+  print*,'-----------------------------------------'
+  print*,'SLM namelist variables:'
+  print*,'dosoilwnudging = ',dosoilwnudging
+  print*,'tausoil = ',tausoil
+  print*,'readland = ',readland
+  if(landtype0.ne.0) print*,'landtype0 =',landtype0
+  if(LAI0.ne.0.) print*,'LAI0 =',LAI0
+  print*,'readsnow =',readsnow
+  if(snow0.ne.0.) print*,'snow0 = ',snow0
+  if(snowt0.ne.0.) print*,'snowt0 = ',snowt0
+  print*,'readsoil = ', readsoil
+  print*,'readinitsoil = ',readinitsoil
+  print*,'readseaice = ',readseaice
+  if(clay0.ne.0.) print*,'clay0 = ',clay0
+  if(sand0.ne.0.) print*,'sand0 = ',sand0
+  if(soilt0.ne.0.) print*,'soilt0 = ',soilt0
+  if(soilw0.ne.0.) print*,'soilw0 = ',soilw0
+  print*,'readimperv = ',clay0
+  print*,'dooutthermal = ',dooutthermal
+  if(IMPERV0.ne.0.) print*,'IMPERV0 = ',IMPERV0
+  print*,'dosoilvolumetric = ',dosoilvolumetric
+  print*,'dorunoff = ',dorunoff
+  print*,'-----------------------------------------'
+end if
+
+END SUBROUTINE slm_setparm
+
+!================================================================================
+!================================================================================
+!================================================================================
+
+SUBROUTINE init_soil_tw
+IMPLICIT NONE
+integer :: dimsoil, nlsf,i,j,k,it,jt,nx1,ny1,nsoil1
+real (KIND=DBL) :: tmp
+real(4), allocatable ::  fld(:,:)
+real(4) sd(nsoil),st(nsoil),sw(nsoil),snd(nsoil),cly(nsoil),srh(nsoil)
+!================================================================================================================
+! read 'soil' input file in case directory
+! allocate soil variables with nsoil dimension read from soil
+! assign initial soil wetness and temperature from soil
+! In current version, there is no x-y distribution of the soil type in SAND and CLAY percentages.
+!================================================================================================================
+
+if(masterproc) print*,'number of soil levels:',nsoil
+open(77,file='./CASES/'//trim(case)//'/soil',status='old',form='formatted')
+read(77,*)
+ do k=1,nsoil
+   read(77,*) sd(k), st(k), sw(k), snd(k), cly(k), srh(k)
+   if(masterproc) print*,'>>>soil layer thickness',k,':',sd(k)
+ end do
+ do k=1,nsoil
+  DO j = 1,ny
+  DO i = 1,nx
+    tau_soil(i,j) = tausoil
+    if(landmask(i,j).eq.1) then
+      s_depth(k,i,j) = sd(k)
+    else ! make seaice with prescribed depth (seaicedepth)
+      s_depth(k,i,j) = sd(k)*seaicedepth/sum(sd(1:nsoil))
+    end if
+  END DO ! i
+  END DO ! j
+  SAND(k,:,:) = snd(k)
+  CLAY(k,:,:) = cly(k)
+  if((nrestart.eq.0.).and..not.readinitsoil) then
+   soilt(k,:,:) = st(k)
+   soilw(k,:,:) = sw(k)
+  end if
+  soil_relax_hgt(k,:,:) = srh(k)
+END DO ! k
+close(77)
+if(nrestart.eq.0) then
+  if(soilt0.ne.-1.) soilt = soilt0
+  if(soilw0.ne.-1.) soilw = soilw0
+end if
+
+s_depth_mm = s_depth*1000._DBL ! soil depth in mm unit
+
+! Calculate node_z (depth of the center of each soil lyaer)
+ node_z(1,:,:) = 0.5_DBL*s_depth(1,:,:)
+ DO k = 2,nsoil
+   node_z(k,:,:) = 0.5_DBL*s_depth(k,:,:)
+   DO j = 1,k-1
+      node_z(k,:,:) = node_z(k,:,:) + s_depth(j,:,:)
+   END DO
+ END DO
+! interface_z : soil depth at the interface level
+ DO k = 1,nsoil
+   interface_z(k,:,:) = node_z(k,:,:) + 0.5_DBL*s_depth(k,:,:)
+   if(masterproc) print*,'>>>depth of layer interface',k,':',interface_z(k,1,1)
+ END DO
+ DO k = 1,nsoil
+   if(masterproc) print*,'>>>depth of layer center',k, node_z(k,1,1)
+ END DO
+
+
+! overwrite clay and sand content
+if(clay0.ne.0..and.sand0.ne.0.) then
+ SAND(:,:,:) = sand0
+ CLAY(:,:,:) = clay0
+end if
+
+call task_rank_to_index(rank,it,jt)
+! overwrite clay and sand content from file
+if(readsoil) then
+  if(masterproc) print*,'reading soil composition profiles from ',trim(soilfile)
+  open(11,file=trim(soilfile),status='old',form='unformatted')
+  read(11) nx1
+  read(11) ny1
+  if(nx1.ne.nx_gl.or.ny1.ne.ny_gl) then
+    if(masterproc) print*,'dimensions of soil domain in file '//trim(soilfile)//' is' // &
+              'different from model domain size: nx=',nx1, &
+              ' ny=',ny1,'  Quitting...'
+    call task_abort()
+  end if
+  allocate (fld(1:nx_gl,1:ny_gl),stat=k); if(k.gt.0) call task_abort_msg("init_soil_rw: alloc fld failed!")
+  read(11) fld(1:nx_gl,1:ny_gl)
+  if(masterproc) print*,'CLAY in file: ',minval(fld),maxval(fld)
+  do k=1,nsoil
+   CLAY(k,1:nx,1:ny) = fld(1+it:nx+it,1+jt:ny+jt)
+  end do
+  read(11) fld(1:nx_gl,1:ny_gl)
+  if(masterproc) print*,'SAND in file: ',minval(fld),maxval(fld)
+  do k=1,nsoil
+   SAND(k,1:nx,1:ny) = fld(1+it:nx+it,1+jt:ny+jt)
+  end do
+  close(11)
+  deallocate(fld)
+end if
+call fminmax_print('CLAY:',real(CLAY),1,nx,1,ny,1)
+call fminmax_print('SAND:',real(SAND),1,nx,1,ny,1)
+
+END SUBROUTINE init_soil_tw
+
+!================================================================================
+!================================================================================
+!================================================================================
+
+
+SUBROUTINE init_soil_par
+
+real (KIND=DBL) :: temp1
+integer i,j,k
+
+sst_cond = 0.
+ks = 0.
+Bconst = 0
+poro_soil = 0.
+m_pot_sat = 0.
+sst_capa = 0.
+theta_FC = 0.
+theta_WP = 0.
+w_s_FC = 0.
+w_s_WP = 0.
+
+DO j = 1,ny
+ DO i = 1,nx
+  if(landmask(i,j).eq.1.and.landicemask(i,j).eq.0) then
+   DO k = 1,nsoil
+
+   ! soil solids thermal conductivity(Johansen 1975) ! quartz content = SAND content
+   ! quartz(=SAND content) thermal conductivity = 7.7 W/mK
+
+    if(SAND(k,i,j).gt.20._DBL) then
+      temp1 = 2.0_DBL   ! thermal conductivity of other minerals [W/mK]
+    else
+      temp1 = 3.0_DBL
+    end if
+    sst_cond(k,i,j) = (7.7_DBL**(SAND(k,i,j)/100.0_DBL))*(temp1**(1.0_DBL-(SAND(k,i,j)/100.0_DBL)))
+
+   ! Calculated following Cosby et al. 1984 ( hydraulic properties)
+   ! hydraulic conductivity at satuation , mm/s
+    ks(k,i,j) = (10.0_DBL**(0.0153_DBL*SAND(k,i,j)-0.884_DBL))*(25.4_DBL/3600.0_DBL) ![mm/s] from [inch/hour]
+
+   ! constant B
+    Bconst(k,i,j) = 0.159_DBL*CLAY(k,i,j) + 2.91_DBL
+
+   ! porosity (or saturation volumetric water content)
+    poro_soil(k,i,j) = -0.00126_DBL*SAND(k,i,j) + 0.489_DBL ! [volume/volume]
+
+   ! moisture potential at saturation, mm
+    m_pot_sat(k,i,j) = min(-150.,-10.0_DBL*(10.**(1.88_DBL-0.0131_DBL*SAND(k,i,j)))) ! [mm] from [cm]
+
+   ! soil heat capacity, J/m3/K
+   ! [J/m3/K]Following de Vries(1963) using SAND 34% CLAY 63%
+    sst_capa(k,i,j) = (2.128_DBL*SAND(k,i,j)+2.385_DBL*CLAY(k,i,j))/(SAND(k,i,j)+CLAY(k,i,j))*(1.e6_DBL)
+
+   ! volumetric moisture content at field capacity
+   ! field capacity is assumed to be the occasion when hydraulic conductivity is 0.1mm/d
+    theta_FC(k,i,j) = poro_soil(k,i,j)*(0.1_DBL/86400._DBL/ks(k,i,j))**(1._DBL/(2._DBL*Bconst(k,i,j)+3._DBL))
+
+   ! volumetric moisture content at wilting point
+    theta_WP(k,i,j) = poro_soil(k,i,j) *(-150000._DBL/m_pot_sat(k,i,j))**(-1._DBL/Bconst(k,i,j))
+
+    ! soil wetness at field capacity
+    w_s_FC(k,i,j) = theta_FC(k,i,j)/poro_soil(k,i,j)
+
+    ! soil wetness at wilting point
+    w_s_WP(k,i,j) = theta_WP(k,i,j)/poro_soil(k,i,j)
+
+  END DO
+  end if
+
+ END DO
+END DO
+
+end subroutine init_soil_par
+!================================================================================
+!================================================================================
+!================================================================================
+
+SUBROUTINE vege_root_init
+! Fraction of total root in each soil layer is determined based on the soil depth and vegetation root parameters
+IMPLICIT NONE
+
+INTEGER :: nrootind, i, j,k
+REAL (KIND=DBL) :: tot_root_density, new_root_density
+
+! Assign root fraction in each soil layer 
+DO i = 1, nx
+DO j = 1, ny 
+  rootF(1:nsoil,i,j) = 0.
+  nrootind = 1 
+  DO k = nsoil,2,-1
+     if(interface_z(k,i,j).ge.rootL(i,j)) then
+       if(interface_z(k-1,i,j).lt.rootL(i,j)) then
+         nrootind =k 
+       end if
+     end if
+  END DO
+  rootF(nrootind,i,j) = 1._DBL-0.5_DBL*(exp(-1._DBL*root_a(i,j)*rootL(i,j)) &
+    + exp(-1._DBL*root_b(i,j)*rootL(i,j)))
+  tot_root_density = rootF(nrootind,i,j)
+  DO k = 1, nrootind-1
+     rootF(k,i,j) = 1._DBL-0.5_DBL*(exp(-1._DBL*root_a(i,j)*interface_z(k,i,j)) &
+         + exp(-1._DBL*root_b(i,j)*interface_z(k,i,j)))  
+  END DO
+  if(nrootind.gt.1) then
+    DO k = nrootind, 2,-1
+      rootF(k,i,j) = rootF(k,i,j)-rootF(k-1,i,j)
+    END DO
+    ! to ensure total root density equals to 1 
+    new_root_density = 0._DBL
+    DO k = 1,nrootind
+      rootF(k,i,j) = rootF(k,i,j)/tot_root_density
+      new_root_density = new_root_density + rootF(k,i,j)
+    END DO
+  end if
+END DO ! j
+END DO ! i
+
+END SUBROUTINE vege_root_init
+
+!================================================================================
+!================================================================================
+!================================================================================
+
+SUBROUTINE init_slm_vars(tr, ts, qr, pressf)
+
+IMPLICIT NONE
+
+REAL, INTENT(IN), DIMENSION(nx,ny) :: tr, ts, qr, pressf
+INTEGER :: i,j
+INTEGER :: it, jt
+real, external :: qsatw,qsati
+r_a = 1.e8_DBL
+r_b = 1.e8_DBL
+r_d = 1.e8_DBL
+r_c = 1.e8_DBL
+DO j = 1, ny
+DO i = 1,nx
+     !   t_canop(i,j) = (tr(i,j)+ts(i,j))*0.5
+     !   t_cas(i,j)   = (tr(i,j)+soilt(1,i,j))*0.5
+        t_cas(i,j)   = tr(i,j)
+        t_canop(i,j) = t_cas(i,j)  ! MK 2025
+        ! amount of water held on vegetation
+        mw(i,j) = 0.0
+        mws(i,j) = 0.0
+        ! soil surface specific humidity
+        if(soilt(1,i,j).ge.tfriz) then
+          q_gr = qsatw(real(soilt(1,i,j)),pressf(i,j))*soilw(1,i,j) * &
+                 fh_calc(soilt(1,i,j),m_pot_sat(1,i,j), soilw(1,i,j), Bconst(1,i,j))
+        else
+          q_gr = qsati(real(soilt(1,i,j)),pressf(i,j))*soilw(1,i,j)
+        end if
+        ! specific humidity in canopy air space
+        q_cas(i,j)   = qr(i,j) ! MK 2025
+     !   q_cas(i,j)   = (qr(i,j)+q_gr)*0.5_DBL
+        ustar(i,j) = 0.1
+        tstar(i,j) = 0.
+
+END DO
+END DO
+
+call fminmax_print_slm('canopT:', real(t_canop), 1,nx, 1,ny,.true.)
+call fminmax_print_slm('casT:', real(t_cas), 1,nx, 1,ny,.true.)
+call fminmax_print_slm('casQ:', real(q_cas), 1,nx, 1,ny,.true.)
+
+END SUBROUTINE init_slm_vars
+
+!====================================================================================
+!====================================================================================
+!====================================================================================
+! Update surface properties :
+
+SUBROUTINE slm_forcing()
+use params, only: doseasons, doglobal, dofcast, dofcast_ice, docyclic
+use vars, only: sstxy, sstxy0, t00, tabs
+use terrain, only: k_terra
+integer i,j,tmp
+real coef
+integer it,jt,k
+logical flag
+call task_rank_to_index(rank,it,jt)
+!if(doglobal.and.doseasons) then
+if(readseaice) then
+    if(.not.dofcast_ice.and.dayiceobs(2).gt.0) then
+      if(day.gt.dayiceobs(2)) call readsurface(seaicefile,iceobs,dayiceobs)
+      coef=(day-dayiceobs(1))/(dayiceobs(2)-dayiceobs(1))
+      do j=1,ny
+       do i=1,nx
+         tmp=nint(iceobs(i,j,1)+coef*(iceobs(i,j,2)-iceobs(i,j,1)))
+         if(landmask(i,j).eq.1) tmp = 0.
+         if(seaicemask(i,j).eq.1.and.tmp.eq.0) then
+           ! seaice point becomes open water:
+           seaicemask(i,j) = 0
+           icemask(i,j) = 0
+           soilt(:,i,j) = 0.
+           sstxy(i,j) = sstxy0(i,j) - t00
+         else if(seaicemask(i,j).eq.0.and.tmp.eq.1) then
+           seaicemask(i,j) = 1
+           icemask(i,j) = 1
+           soilt(:,i,j) = tfriz
+         end if
+         if(seaicemask(i,j).eq.1.and.minval(soilt(:,i,j)).lt.1.) then
+             ! initial seaice destribution: linear between freeing temp and bottom and air temp above
+          do k=1,nsoil
+             soilt(k,i,j)=tabs(i,j,k_terra(i,j))+(tfriz-tabs(i,j,k_terra(i,j))) &
+                           /(node_z(nsoil,i,j)-node_z(1,i,j))*(node_z(k,i,j)-node_z(1,i,j))
+          end do
+         end if
+         if(seaicemask(i,j).eq.1.and.landicemask(i,j).eq.1) then
+           print*,'Error: seaicemask.eq.1.and.landicemask.eq.1','rank i j=',rank,i,j
+           call task_abort()
+         end if
+       end do
+      end do
+    end if
+
+    do j=1,ny
+     do i=1,nx
+         if(seaicemask(i,j).eq.1.and.minval(soilt(:,i,j)).lt.1.) then
+             ! initial seaice destribution: linear between freeing temp and bottom and air temp above
+          do k=1,nsoil
+             soilt(k,i,j)=tabs(i,j,k_terra(i,j))+(tfriz-tabs(i,j,k_terra(i,j))) &
+                           /(node_z(nsoil,i,j)-node_z(1,i,j))*(node_z(k,i,j)-node_z(1,i,j))
+          end do
+         end if
+     end do
+    end do   
+
+    if(.not.dofcast.and.dayLAIobs(2).gt.0) then
+      if(day.gt.dayLAIobs(2)) then
+        ! assume that the LAI dataset is alwats cyclic
+        flag = docyclic
+        docyclic = .true.
+        call readsurface(LAIfile,LAIobs,dayLAIobs)
+        docyclic = flag 
+      end if
+      coef=(day-dayLAIobs(1))/(dayLAIobs(2)-dayLAIobs(1))
+      LAI(:,:)=LAIobs(:,:,1)+(LAIobs(:,:,2)-LAIobs(:,:,1))*coef
+      WHERE(vegetated) LAI=max(LAI,0.001_DBL) 
+      IR_emis_vege = (1._DBL-exp(-(phi_1+phi_2)*LAI))*IR_emis_leaf
+      mw_mx = 0.1_DBL*LAI
+    end if
+end if
+END SUBROUTINE slm_forcing
+
+!====================================================================================
+!====================================================================================
+SUBROUTINE collect_2D_stat_vars(i,j)
+IMPLICIT NONE
+integer,intent(in) :: i,j
+integer ::k
+dtfactor_dbl = dtfactor
+
+if(dtfactor.eq.0.) return
+
+s_taux_sfc(i,j) = s_taux_sfc(i,j) + taux_sfc*dtfactor_dbl
+s_tauy_sfc(i,j) = s_tauy_sfc(i,j) + tauy_sfc*dtfactor_dbl
+
+s_precip(i,j) = s_precip(i,j) + precip*dtfactor_dbl
+s_drain(i,j) = s_drain(i,j) + drain*dtfactor_dbl
+s_precip_sfc(i,j) = s_precip_sfc(i,j) + precip_sfc*dtfactor_dbl
+
+s_net_swup(:,i,j) = s_net_swup(:,i,j) + net_swup*dtfactor_dbl
+s_net_lwup(:,i,j) = s_net_lwup(:,i,j) + net_lwup*dtfactor_dbl
+s_net_rad(:,i,j) = s_net_rad(:,i,j) + net_rad*dtfactor_dbl
+
+s_RiB(i,j) = s_RiB(i,j) + RiB*dtfactor_dbl
+s_ustar(i,j) = s_ustar(i,j) + ustar(i,j)*dtfactor_dbl
+
+s_LAI(i,j) = s_LAI(i,j) + LAI(i,j)*dtfactor_dbl
+        s_Cveg(i,j) = s_Cveg(i,j) + Cp_vege(i,j)*dtfactor_dbl
+
+s_r_a(i,j) = s_r_a(i,j) + r_a*dtfactor_dbl
+s_r_b(i,j) = s_r_b(i,j) + r_b*dtfactor_dbl
+s_r_c(i,j) = s_r_c(i,j) + r_c*dtfactor_dbl
+s_r_d(i,j) = s_r_d(i,j) + r_d*dtfactor_dbl
+s_r_soil(i,j) = s_r_soil(i,j) + r_soil*dtfactor_dbl
+
+s_shf_canop(i,j) = s_shf_canop(i,j) + shf_canop(i,j)*dtfactor_dbl
+s_shf_soil(i,j) = s_shf_soil(i,j) + shf_soil(i,j)*dtfactor_dbl
+s_shf_air(i,j) = s_shf_air(i,j) + shf_air(i,j)*dtfactor_dbl
+
+s_lhf_canop(i,j) = s_lhf_canop(i,j) + lhf_canop(i,j)*dtfactor_dbl
+s_lhf_soil(i,j) = s_lhf_soil(i,j) + lhf_soil(i,j)*dtfactor_dbl
+s_lhf_air(i,j) = s_lhf_air(i,j) + lhf_air(i,j)*dtfactor_dbl
+s_lhf_wet(i,j) = s_lhf_wet(i,j) + evapo_wet*lcond*dtfactor
+s_lhf_tr(i,j) = s_lhf_tr(i,j) + evapo_dry*lcond*dtfactor
+
+s_evp_canop(i,j) = s_evp_canop(i,j) + evp_canop(i,j)*dtfactor_dbl
+s_evp_soil(i,j) = s_evp_soil(i,j) + evp_soil(i,j)*dtfactor_dbl
+s_evp_air(i,j) = s_evp_air(i,j) + evp_air(i,j)*dtfactor_dbl
+s_evp_wet(i,j) = s_evp_wet(i,j) + evapo_wet*dtfactor_dbl
+s_evp_tr(i,j) = s_evp_tr(i,j) + evapo_dry*dtfactor_dbl
+s_fh(i,j) = s_fh(i,j) + fh*dtfactor_dbl
+
+s_tcnp(i,j)= s_tcnp(i,j) + t_canop(i,j) * dtfactor_dbl
+s_tcas(i,j)= s_tcas(i,j) + t_cas(i,j) * dtfactor_dbl
+s_qcas(i,j)= s_qcas(i,j) + q_cas(i,j) * dtfactor_dbl
+s_mw(i,j)= s_mw(i,j) + mw(i,j) * dtfactor_dbl
+s_mws(i,j)= s_mws(i,j) + mws(i,j) * dtfactor_dbl
+s_precip_in(i,j)= s_precip_in(i,j) + precip_in*dtfactor_dbl
+s_run_off_sfc(i,j)= s_run_off_sfc(i,j) + run_off_sfc*dtfactor_dbl
+s_drainage(i,j) = s_drainage(i,j) + drainage_flux*dtfactor_dbl
+
+
+DO k = 1,nsoil
+  s_soilw(k,i,j) = s_soilw(k,i,j) + soilw(k,i,j)*dtfactor_dbl
+  s_soilt(k,i,j) = s_soilt(k,i,j) + soilt(k,i,j)*dtfactor_dbl
+  s_scond(k,i,j) = s_scond(k,i,j) + st_cond(k,i,j)*dtfactor_dbl
+  s_scapa(k,i,j) = s_scapa(k,i,j) + st_capa(k,i,j)*dtfactor_dbl
+  s_soilw_nudge(k,i,j) = s_soilw_nudge(k,i,j) + soilw_nudge(k,i,j)*dtfactor_dbl
+  s_soilt_nudge(k,i,j) = s_soilt_nudge(k,i,j) + soilt_nudge(k,i,j)*dtfactor_dbl
+END DO
+s_grflux0(i,j) = s_grflux0(i,j) + grflux0*dtfactor_dbl
+        
+END SUBROUTINE collect_2D_stat_vars 
+
+!================================================================================
+!================================================================================
+!================================================================================
+
+
+
+SUBROUTINE slm_stat_2Dinit
+IMPLICIT NONE
+
+ s_net_swup = 0. 
+ s_net_lwup = 0.
+ s_net_rad = 0.
+ s_taux_sfc = 0. ! surface momentum flux in x directiron
+ s_tauy_sfc = 0. ! surface momentum flux in y direction
+ s_precip = 0.  !precipitation intercepted by canopy
+ s_drain = 0.  ! drainage rate from canopy
+ s_precip_sfc = 0.  ! preciptation rate at the actual soil surface
+ s_precip_ref = 0.
+ s_RiB = 0. ! Bulk Richardson parameter
+ s_ustar = 0.  ! 
+ s_r_a = 0.  ! resistance Ra
+ s_r_b = 0. ! resistance Rb
+ s_r_d = 0. ! resistance Rd
+ s_r_soil = 0. ! resistance Rsoil
+ s_r_c = 0. ! stomatal resistance
+ s_LAI = 0.  
+ s_Cveg = 0. 
+ s_shf_canop = 0. ! sensible heat flux from leaf surface to air
+ s_shf_soil = 0. ! sensible heat flux from soil to air
+ s_shf_air = 0. ! sensible heat flux from air to ref. level
+ s_lhf_canop = 0. ! canopy latent heat flux 
+ s_lhf_soil = 0. ! soil latent heat flux
+ s_lhf_air = 0. ! total latent heat flux
+ s_lhf_wet = 0. ! direct evaporation from water storage on leaves
+ s_lhf_tr=0.  ! transpiration
+ s_fh=0.  ! sol surface wetness
+ s_evp_canop = 0. ! canopy latent heat flux 
+ s_evp_soil = 0. ! soil latent heat flux
+ s_evp_air = 0. ! total latent heat flux
+ s_evp_wet = 0. ! direct evaporation from water storage on leaves
+ s_evp_tr=0.  ! transpiration
+ s_precip_in = 0. ! precipitation infiltration rate 
+ s_run_off_sfc = 0. ! surface run off rate
+ s_drainage = 0. ! bottom soil layer drainage
+ s_tcnp = 0. ! canopy T
+ s_tcas = 0.
+ s_qcas = 0.
+ s_mw = 0.
+ s_mws = 0.
+ s_soilw = 0. ! soil wetness
+ s_soilt = 0. ! soil temperature
+ s_scond = 0. ! soil temperature
+ s_scapa = 0. ! soil temperature
+ s_soilw_nudge = 0. ! soil wetness nudging
+ s_soilt_nudge = 0. ! soil temperature nudging
+ s_soilt =0. ! soil temperature
+ s_grflux0 = 0. ! soil heat flux
+
+END SUBROUTINE slm_stat_2Dinit
+
+!================================================================================
+!================================================================================
+!================================================================================
+
+SUBROUTINE fminmax_print_slm(name,f,dimx1,dimx2,dimy1,dimy2,vege)
+implicit none
+logical,optional,intent(in):: vege 
+integer, intent(in):: dimx1, dimx2, dimy1, dimy2
+real, intent(in):: f(dimx1:dimx2, dimy1:dimy2)
+real :: fmn, fmx
+character(len=*),intent(in) :: name
+real ::fmin(1),fmax(1),fff(1)
+integer ::i,j
+
+if(dimx2.eq.1.and.dimy2.eq.1) then
+   fmn = f(1,1)
+   fmx = f(1,1)
+else
+   fmn = 1.e30
+   fmx =-1.e30
+end if 
+do j=1,ny
+  do i=1,nx
+      if(landmask(i,j).eq.1.or.seaicemask(i,j).eq.1) then  ! uncomment this for SAM_ISLAND
+        if(.not.present(vege)) then ! find min-max over entire land domain
+          fmn = min(fmn,f(i,j))
+          fmx = max(fmx,f(i,j))
+        else 
+          if(vegetated(i,j)) then ! fin min-max over the only domain which has a vegetation layer
+            fmn = min(fmn,f(i,j))
+            fmx = max(fmx,f(i,j))
+          end if ! 
+        end if ! .not.present(vege)
+      end if ! landmask.eq.1
+  end do
+enddo
+fmin(1) = 1.e30
+fmax(1) =-1.e30
+fmin(1) = min(fmin(1),fmn)
+fmax(1) = max(fmax(1),fmx)
+
+if(dompi) then
+  fff(1)=fmax(1)
+  call task_max_real(fff(1),fmax(1),1)
+  fff(1)=fmin(1)
+  call task_min_real(fff(1),fmin(1),1)
+end if
+if(masterproc) print *,name,fmin,fmax
+END SUBROUTINE fminmax_print_slm
+
+!================================================================================
+!================================================================================
+!================================================================================
+
+SUBROUTINE slm_stepout
+use params, only: docolumn
+
+integer k
+       
+if(masterproc)  print*, '========== SLM : OVER LAND ============'
+call fminmax_print_slm('canopT:', real(t_canop), 1,nx, 1,ny,.true.)
+call fminmax_print_slm('casT:', real(t_cas), 1,nx, 1,ny)
+call fminmax_print_slm('casQ:', real(q_cas), 1,nx, 1,ny)
+call fminmax_print_slm('shf_soil:',real(shf_soil),1,nx,1,ny)
+call fminmax_print_slm('shf_canop:',real(shf_canop),1,nx,1,ny,.true.)
+call fminmax_print_slm('total shf:',real(shf_air),1,nx,1,ny)
+call fminmax_print_slm('lhf_soil:',real(lhf_soil),1,nx,1,ny)
+call fminmax_print_slm('lhf_canop:',real(lhf_canop),1,nx,1,ny,.true.)
+call fminmax_print_slm('total lhf:',real(lhf_air),1,nx,1,ny)
+call fminmax_print_slm('evp_soil(mm/d):',real(evp_soil)*86400.,1,nx,1,ny)
+call fminmax_print_slm('evp_canop (mm/d):',real(evp_canop)*86400.,1,nx,1,ny,.true.)
+call fminmax_print_slm('total evp(mm/d):',real(evp_air)*86400.,1,nx,1,ny)
+call fminmax_print_slm('soil T top:',real(soilt(1,:,:)),1,nx,1,ny)
+call fminmax_print_slm('soil T deep:',real(soilt(nsoil,:,:)),1,nx,1,ny)
+call fminmax_print_slm('soil wetness top:',real(soilw(1,:,:)),1,nx,1,ny)
+call fminmax_print_slm('soil wetness deep:',real(soilw(nsoil,:,:)),1,nx,1,ny)
+call fminmax_print_slm('snow_depth(m):', real(snow_mass/rho_snow), 1,nx, 1,ny)
+call fminmax_print_slm('snow_temp(K):', real(snowt), 1,nx, 1,ny)
+call fminmax_print_slm('mw(mm):', real(mw), 1,nx, 1,ny)
+call fminmax_print_slm('mws(mm):', real(mws), 1,nx, 1,ny)
+if(docolumn) then
+  print*,'---------------------------'
+  print*,'soil level depth temperature and water:'
+  do k=1,nsoil
+     write(*,'(i3,3g15.7)') k,node_z(k,1,1),soilt(k,1,1),soilw(k,1,1)
+  end do
+end if
+if(masterproc) print*, '========== SLM ============'
+END SUBROUTINE slm_stepout
+
+!================================================================================
+!================================================================================
+!================================================================================
+
+REAL (KIND=DBL) FUNCTION fh_calc(t,  mps, sw, B)
+implicit none
+real (KIND=DBL) :: t,mps, sw, B
+real (KIND=DBL) :: moist_pot1
+moist_pot1 = mps/max(1.e-10_DBL,sw**B)/1000._DBL
+moist_pot1 = max(-1.e8_DBL, moist_pot1)
+fh_calc = min(1._DBL, exp(moist_pot1*ggr/(rv*t)))
+END FUNCTION fh_calc
+
+END MODULE slm_vars
