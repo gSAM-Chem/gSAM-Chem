@@ -1,0 +1,241 @@
+
+! Monin-Obukhov Similarity for ocean
+! (C) Marat Khairoutdinov, 2019
+
+subroutine oceflx(rhoh, uh, vh, th, qh, thp, h, ts, qs,  &
+                   wd, shf, lhf, taux  ,tauy  ,ra, raq, tref  ,qref  ,uref, vref )
+
+use grid, only: dtn
+use params, only: epsv
+implicit none
+
+! Input:
+
+real,intent(in) ::  rhoh ! air density at height h, kg/m3
+real,intent(in) ::  uh   ! zonal wind at height h, m/s
+real,intent(in) ::  vh   ! merid wind at height h, m/s
+real,intent(in) ::  th   ! temperature at height h, K
+real,intent(in) ::  qh   ! vapor at height h, g/g
+real,intent(in) ::  thp  ! potential temperature at height h, K
+real,intent(in) ::  h    ! height h, m
+real,intent(in) ::  ts   ! temperature at z0, K
+real,intent(in) ::  qs   ! saturated vapor at z0, g/g
+real,intent(in) :: wd    ! Wind enhansement -MK 2023
+
+
+!--- output arguments -------------------------------
+real,intent(out)  ::  shf   ! heat flux: sensible    (Km/s)
+real,intent(out)  ::  lhf   ! heat flux: latent      (m/s)
+real,intent(out)  ::  taux  ! surface stress, zonal      (N/m2)
+real,intent(out)  ::  tauy  ! surface stress, maridional (N/2)
+real,intent(out)  ::  ra    ! airodynamic resistence
+real,intent(out)  ::  raq   ! airodynamic resistence 
+real,intent(out)  ::  tref  ! diag:  2m ref height T     (K)
+real,intent(out)  ::  qref  ! diag:  2m ref humidity (kg/kg)
+real,intent(out)  ::  uref  ! diag: 10m zonal wind (m/s)
+real,intent(out)  ::  vref  ! diag: 10m merid wind (m/s)
+
+! Local
+
+real  tsp
+real  r     ! bulk Richardson number
+real  zodym, zodyh, vel, qss, fm0, xsi10, xsi2, fm10, fh2
+real  x, x0, xm0, xh0, xsim0, xsih0, xsi1, fm, fh, error
+real  xx, yy
+real  psim1, psim2, psim3, psim4
+real  psih1, psih2, psih3, psih4
+real  z0, z0h, zTh, zt0
+real, parameter :: xsim = -1.574
+real, parameter :: xsih = -0.465
+real, parameter :: xm = sqrt(sqrt((1.-16.*xsim)))
+real, parameter :: xh = sqrt(sqrt((1.-16.*xsih)))
+real, parameter :: errormax = 0.01
+real, parameter :: kk = 0.35
+integer, parameter :: nitermax = 10
+integer niter
+real:: us=0.    ! ocn u-velocity        (m/s)
+real:: vs=0.    ! ocn v-velocity        (m/s)
+real xsi, ustar, tstar, qstar, tau
+real mom_trans_coef, heat_trans_coef
+
+! unstable: -1.574<xsi<0
+psim1(x,x0)=2.*log((1.+x)/(1.+x0))+log((1.+x*x)/(1.+x0*x0))-2.*(atan(x)-atan(x0))
+psih1(x,x0)=2.*log((1.+x*x)/(1.+x0*x0))
+! very unstable:  xsi < -1.574
+psim2(xsi,xsim0,xm0) = log(xsim/xsim0)-psim1(xm,xm0)+1.14*((-xsi)**0.3333-(-xsim)**0.3333)
+psih2(xsi,xsih0,xh0) = log(xsih/xsih0)-psih1(xh,xh0)+0.8*((-xsi)**0.3333-(-xsih)**0.3333)
+! stable: 0 < xsi < 1
+psim3(xsi,xsim0) = -5.*(xsi-xsim0)
+psih3(xsi,xsih0) = -5.*(xsi-xsih0)
+! very stable: 0 < xsi < 1
+psim4(xsi,xsim0) = log(xsi**5/xsim0)+5.*(1.-xsim0)+xsi-1.
+psih4(xsi,xsih0) = log(xsi**5/xsih0)+5.*(1.-xsih0)+xsi-1.
+xx(yy) = sqrt(sqrt((1.-16.*yy)))
+
+tsp = ts
+
+! Add additional velocity depending on the stratification
+if((thp-tsp).ge.0.) then
+        vel = max(0.5,sqrt(uh**2+vh**2+wd**2))
+else
+        vel = max(0.5,sqrt(uh**2+vh**2+wd**2))
+END IF
+
+!r=9.81/tsp*(thp*(1.+epsv*qh)-tsp*(1.+epsv*qs))*h/(vel**2) ! bulk richardson number
+r=9.81/tsp*(thp-tsp)*h/(vel**2) ! bulk richardson number
+r = max(-10.,min(r, 0.5))
+
+! initial guess:
+
+ustar = sqrt(0.0027/vel + 0.000142 + 0.0000764*vel)*vel
+
+! Charnock formula taken from IFS 
+z0 = 0.11*1.5e-5/ustar+0.018/9.81*ustar**2
+z0h=z0/h
+zt0 = 0.4*1.5e-5/ustar
+zTh=zt0/h   
+zodym = log(1./z0h)
+zodyh = log(1./zTh)
+
+! first guess for xsi
+if(r.gt.0.) then
+ xsi = r*zodym/(1.-5.*min(0.19,r))
+else
+ xsi = r*zodym
+end if
+
+niter = 0
+error = 1000
+do while (error.gt.errormax.and.niter.lt.nitermax)
+
+  xsi1 = xsi
+  niter = niter + 1
+  xsim0 = z0h*xsi
+  xsih0 = zTh*xsi 
+
+  if(xsi.lt.-0.01) then
+    if(xsi.ge.xsim) then
+      x = xx(xsi)
+      x0 = xx(xsim0)
+      fm = zodym-psim1(x,x0)
+    else
+      xm0 = xx(xsim0)
+      fm = psim2(xsi,xsim0,xm0)
+    end if
+    if(xsi.ge.xsih) then
+      x = xx(xsi)
+      x0 = xx(xsih0)
+      fh = zodyh-psih1(x,x0)
+    else
+      xh0 = xx(xsih0)
+      fh = psih2(xsi,xsih0,xh0)
+    end if
+  elseif(xsi.gt.0.01) then
+    if(xsi.le.1.) then
+      fm = zodym-psim3(xsi,xsim0)
+      fh = zodyh-psih3(xsi,xsih0)
+    else
+      fm = psim4(xsi,xsim0)
+      fh = psih4(xsi,xsih0)
+    end if
+  else
+    fm = zodym
+    fh = zodyh
+  end if
+  xsi = r*fm*fm/fh
+  ustar = kk/fm*vel
+  z0 = 0.11*1.5e-5/ustar+0.018/9.81*ustar**2
+  z0h=z0/h
+  zt0 = z0
+  zTh=zt0/h
+
+  error = abs(xsi-xsi1)
+
+end do
+
+! limit fh and fh to avoid too large fluxes especially over large surface
+! roughness. Basically, make the maximum slowdown of the velocity not bigger
+! than ! 50% in one timestep.
+
+fm0 = sqrt(kk**2*vel*dtn/0.5/h)
+fm = max(fm0,fm)
+fh = max(fh,fh/fm*fm0)
+
+! drag coefficient C_D = k**2/fm**2
+! heat transfer coefficient C_H = k**2/fm/fh
+
+mom_trans_coef = kk**2/(fm*fm)
+heat_trans_coef = kk**2/(fm*fh)
+
+ustar = sqrt(mom_trans_coef)*vel
+ustar = max(0.2,ustar)
+tau = rhoh * ustar * ustar
+        !--- momentum flux ---
+taux = -tau * (uh-us) / vel
+tauy = -tau * (vh-vs) / vel
+
+        !--- heat flux ---
+tstar = sqrt(heat_trans_coef)*(thp - ts)
+qstar = sqrt(heat_trans_coef)*(qh - qs)
+shf  = -tau * tstar / ustar / rhoh
+lhf  = -tau * qstar / ustar / rhoh
+
+
+! aerodynamic resistance between surface and reference level
+ra = fh/kk/ustar
+raq = fh/kk/ustar
+
+! wind at 10 m and scalars at 2 m:
+
+z0h=z0/10.
+zTh=zt0/2.
+zodym = log(1./z0h)
+zodyh = log(1./zTh)
+xsi10 = xsi * 10./h
+xsi2 = xsi * 2./h
+xsim0 = z0h*xsi10
+xsih0 = zTh*xsi2
+if(xsi10.lt.-0.01) then
+  if(xsi10.ge.xsim) then
+    x = xx(xsi10)
+    x0 = xx(xsim0)
+    fm10 = zodym-psim1(x,x0)
+  else
+    xm0 = xx(xsim0)
+    fm10 = psim2(xsi10,xsim0,xm0)
+  end if
+elseif(xsi10.gt.0.01) then
+  if(xsi10.le.1.) then
+    fm10 = zodym-psim3(xsi10,xsim0)
+  else
+    fm10 = psim4(xsi10,xsim0)
+  end if
+else
+  fm10 = zodym
+end if
+if(xsi2.lt.-0.01) then
+  if(xsi2.ge.xsih) then
+    x = xx(xsi2)
+    x0 = xx(xsih0)
+    fh2 = zodyh-psih1(x,x0)
+  else
+    xh0 = xx(xsih0)
+    fh2 = psih2(xsi2,xsih0,xh0)
+  end if
+elseif(xsi2.gt.0.01) then
+  if(xsi2.le.1.) then
+    fh2 = zodyh-psih3(xsi2,xsih0)
+  else
+    fh2 = psih4(xsi2,xsih0)
+  end if
+else
+  fh2 = zodyh
+end if
+
+uref = uh*fm10/fm
+vref = vh*fm10/fm
+tref = (tsp+(thp-tsp)*fh2/fh)
+qref = qs+(qh-qs)*fh2/fh
+
+return
+end
