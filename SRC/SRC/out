@@ -1,0 +1,114 @@
+diff RAD_RRTM/m2005_cloud_optics.f90 /glade/u/home/marat/UUU/SRC/RAD_RRTM/m2005_cloud_optics.f90
+69,70d68
+<         print*,'opening file:',trim(rundatadir) // '/' // &
+<              trim(liqCldOpticsFile)
+343c341,343
+<     swp(1:nx,1:nz) = swp(1:nx,1:nz) / (1.e-6 + CloudFrac(1:nx,1:nz))
+---
+>     if(dosnow_radiatively_active) then
+>        swp(1:nx,1:nz) = swp(1:nx,1:nz) / (1.e-6 + CloudFrac(1:nx,1:nz))
+>     end if
+diff RAD_RRTM/mcica_subcol_gen_lw.f90 /glade/u/home/marat/UUU/SRC/RAD_RRTM/mcica_subcol_gen_lw.f90
+122,123c122
+<          print*,'MCICA_SUBCOL: INVALID ICLD =', ICLD
+<          stop 
+---
+>          stop 'MCICA_SUBCOL: INVALID ICLD'
+diff RAD_RRTM/rad.f90 /glade/u/home/marat/UUU/SRC/RAD_RRTM/rad.f90
+110a111
+>                            CloudIceMassMixingRatio, &
+121,123c122,124
+<   real, dimension(nx, ny):: lwnsxy=0., swnsxy=0., & ! Long- and short-wave radiative heating (W/m2)  
+<       swdsvisxy=0., swdsnirxy=0., swdsvisdxy=0., swdsnirdxy=0., lwdsxy=0., swdsxy=0., coszrsxy=0., &
+<       swusvisdxy=0., swusnirdxy=0.
+---
+>   real, dimension(nx, ny):: lwnsxy, swnsxy, & ! Long- and short-wave radiative heating (W/m2)  
+>       swdsvisxy, swdsnirxy, swdsvisdxy, swdsnirdxy, lwdsxy, swdsxy, coszrsxy, &
+>       swusvisdxy, swusnirdxy
+497c498,503
+<             IWP(lon, 1:nzm-m) = qci(lon, lat, m+1:nzm) * 1.e3 * layerMass(lon, 1:nzm-m) 
+---
+>             if(ALLOCATED(CloudIceMassMixingRatio)) then
+>                IWP(lon, 1:nzm-m) = CloudIceMassMixingRatio(lon, lat, m+1:nzm) &
+>                                     * 1.e3 * layerMass(lon, 1:nzm-m) ! For P3 Ice w/doeiscld==F
+>             else
+>                IWP(lon, 1:nzm-m) = qci(lon, lat, m+1:nzm) * 1.e3 * layerMass(lon, 1:nzm-m) 
+>             end if
+595,596c601,602
+<               cloudFrac_liq(:,:) = MERGE(CloudFrac(:,:), 0., LWP(:,:)>0.)
+<               cloudFrac_ice(:,:) = MERGE(CloudFrac(:,:), 0., IWP(:,:)>0.)
+---
+>               cloudFrac_liq(:,:) = MERGE(CloudFrac(:,:), 0._kind_rb, LWP(:,:)>0.)
+>               cloudFrac_ice(:,:) = MERGE(CloudFrac(:,:), 0._kind_rb, IWP(:,:)>0.)
+811c817
+<           if(any(solarZenithAngleCos(:) >= tiny(solarZenithAngleCos))) then 
+---
+>           ! MK  if(all(solarZenithAngleCos(:) >= tiny(solarZenithAngleCos))) then 
+949,970c955,974
+<           else
+<               !
+<               ! 2D diagnostic fields - nighttime values
+<               !
+<               where(solarZenithAngleCos(:).lt.tiny(solarZenithAngleCos))
+<               swDownSurface        (:, lat) = 0.0
+<               swDownSurfaceClearSky(:, lat) = 0.0
+<               swUpSurface          (:, lat) = 0.0
+<               swUpSurfaceClearSky  (:, lat) = 0.0
+<               swDownToa            (:, lat) = 0.0
+<               swDownTom            (:, lat) = 0.0
+<               swUpToa              (:, lat) = 0.0
+<               swUpTom              (:, lat) = 0.0
+<               swUpToaClearSky      (:, lat) = 0.0
+<               insolation_TOA       (:, lat) = 0.0
+<               visDownSurface       (:, lat) = 0.0
+<               visDownSurfaceDiffuse(:, lat) = 0.0
+<               nirDownSurface       (:, lat) = 0.0
+<               nirDownSurfaceDiffuse(:, lat) = 0.0
+<               CosZenithAngle(:,lat) = solarZenithAngleCos(:)
+<               end where
+<           end if 
+---
+>           !MK  else
+>           !    !
+>           !    ! 2D diagnostic fields - nighttime values
+>           !    !
+>           !    swDownSurface        (:, lat) = 0.0
+>           !    swDownSurfaceClearSky(:, lat) = 0.0
+>           !    swUpSurface          (:, lat) = 0.0
+>           !    swUpSurfaceClearSky  (:, lat) = 0.0
+>           !    swDownToa            (:, lat) = 0.0
+>           !    swDownTom            (:, lat) = 0.0
+>           !    swUpToa              (:, lat) = 0.0
+>           !    swUpTom              (:, lat) = 0.0
+>           !    swUpToaClearSky      (:, lat) = 0.0
+>           !    insolation_TOA       (:, lat) = 0.0
+>           !    visDownSurface       (:, lat) = 0.0
+>           !    visDownSurfaceDiffuse(:, lat) = 0.0
+>           !    nirDownSurface       (:, lat) = 0.0
+>           !    nirDownSurfaceDiffuse(:, lat) = 0.0
+>           !    CosZenithAngle(:,lat) = solarZenithAngleCos(:)
+>           !  end if 
+1194,1196c1198
+<     !bloss: Use Thompson cloud optics for both Thompson and P3
+<     if( (trim(micro_scheme_name()) == 'thompson' .or. &
+<          trim(micro_scheme_name()) == 'p3' ) .and. &
+---
+>     if( (trim(micro_scheme_name()) == 'thompson') .and. &
+diff RAD_RRTM/thompson_cloud_optics.f90 /glade/u/home/marat/UUU/SRC/RAD_RRTM/thompson_cloud_optics.f90
+383c383
+<       dge_ice(i) = dg(iUse(i), jUse(i) ) 
+---
+>       dge_ice(i) = MAX(5., MIN(5.e4, dg(iUse(i), jUse(i) ) ) )
+403,408c403,407
+< ! Too mny of those sometimes - MK
+< !    if (MINVAL( dge_ice(1:nUse) ) .lt. 5.0_r8 ) then
+< !      iloc = MINLOC(dge_ice(1:nUse))
+< !982   format('Warning in thompson_cloud_optics.f90: Dge_ice = ', F8.3, ' < 5 micron w/layer iwp = ', F12.6,' g/m2')
+< !      write(*,982) dge_ice(iloc), wp(iUse(iloc),jUse(iloc))
+< !    end if
+---
+>     if (MINVAL( dge_ice(1:nUse) ) .lt. 5.0_r8 ) then
+>       iloc = MINLOC(dge_ice(1:nUse))
+> 982   format('Warning in thompson_cloud_optics.f90: Dge_ice = ', F8.3, ' < 5 micron w/layer iwp = ', F12.6,' g/m2')
+>       write(*,982) dge_ice(iloc), wp(iUse(iloc),jUse(iloc))
+>     end if
