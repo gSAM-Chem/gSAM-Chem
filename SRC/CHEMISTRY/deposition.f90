@@ -4,7 +4,7 @@ module deposition
 
     use cloudchem_Parameters, only: NVAR
     use chemistry_params, only: dry_deposition_species, dry_deposition_velocities
-    use grid, only : z, nx, ny, nzm
+    use grid, only : z, nx, ny
     use cloudchem_Monitor, only: SPC_NAMES
     use vars, only : dtn
 

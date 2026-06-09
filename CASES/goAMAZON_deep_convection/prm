@@ -99,7 +99,7 @@
     
     !! LIGHTNING EMISSIONS !!
     do_CTG_lightning        = .true.,
-    do_IC_lightning         = .true.,
+    do_IC_lightning         = .false.,
 
     IC_decaria              = .true.,
     CTG_decaria_reflectivity = .true.,
