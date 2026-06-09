@@ -264,7 +264,7 @@ contains
         integer :: lightning_time_step                                          ! How many time steps to skip before calculating lightning (function of dt)
         real :: moist_adiabatic_lapse_rate = 5e-3                               ! an estimate of the moist adiabatic lapse rate, in C / m
 
-        real :: radar_threshold = 1                                           ! to match 20 dBZ, approximate qp mixing ratio (kg/kg) based on regression
+        real :: radar_threshold = 5e-4                                           ! to match 20 dBZ, approximate qp mixing ratio (kg/kg) based on regression
         
         ! Cloud-to-ground lightning
         real :: cloud_to_ground_isotherm = -15                                  ! isoterm of the Gaussian mean for CTG lightning, in Celsius
@@ -296,8 +296,8 @@ contains
         lightning_time_step = time_between_flashes / dt
 
         ! If the desired time between flashes has passed, then do lightning
-        if ( mod(nstep, lightning_time_step) == 0 ) then
-            allocate(vertical_function_profile(nz), change_in_mixing_ratio(nx, ny, nz))
+        if ( mod(nstep, lightning_time_step) == 0 .and. nstep .gt. 0 ) then
+            allocate(vertical_function_profile(nzm), change_in_mixing_ratio(nx, ny, nzm))
             change_in_mixing_ratio = 0.
 
             do i = 1, nx
@@ -319,7 +319,7 @@ contains
                     
                     ! Integration for denominator
                     integral_of_vertical_function = 0.
-                    do k = 1, nz
+                    do k = 1, nzm
                         integral_of_vertical_function = integral_of_vertical_function + ( vertical_function_profile(k) * pres(k) * 100 ) * dz           ! 100 is to convert from mbar to Pa
                     enddo
                     
@@ -362,7 +362,7 @@ contains
                         if ( cloud_top_heights(i, j) < 1 ) then 
                             change_in_mixing_ratio(i,j,:)= 0.
                         else
-                            do k = 1, nz
+                            do k = 1, nzm
                                 change_in_mixing_ratio(i,j,k) = change_in_mixing_ratio(i,j,k) / ( x_area_of_storm * dx * dx ) ! eventually replace dx with dy
                                 change_in_mixing_ratio(i,j,k) = change_in_mixing_ratio(i,j,k) * price_and_rind_flash_rates(i,j) / sum( price_and_rind_flash_rates(:,:) )
                             enddo
@@ -382,7 +382,7 @@ contains
                 do k = 1,nzm 
                     do i = 1,nx
                         do j = 1,ny
-                            if ( ( qpl(i, j, k) + qpi(i, j, k) ) >= radar_threshold ) then
+                            if ( ( qpl(i,j,k) + qpi(i,j,k) ) >= radar_threshold ) then
                                 number_of_20dbz_per_altitude(k) = number_of_20dbz_per_altitude(k) + 1
                             else
                                 change_in_mixing_ratio(i,j,k) = 0.
@@ -401,9 +401,18 @@ contains
                     enddo
                 enddo
 
-                ! print*, "*************** Maximum CTG lightning = ", MAXVAL(change_in_mixing_ratio)
+                if (any(change_in_mixing_ratio /= change_in_mixing_ratio)) then
+                    print*, 'NaN detected in change_in_mixing_ratio'
+                endif
 
-                gchem_field(:,:,:, ind_NO) = gchem_field(:,:,:, ind_NO) + change_in_mixing_ratio(:,:,:)
+                print*, "*************** Maximum CTG lightning = ", MAXVAL(change_in_mixing_ratio)
+                print*, "*************** Minimum CTG lightning = ", MINVAL(change_in_mixing_ratio)
+
+                print*, "*************** Maximum NO  = ", MAXVAL(gchem_field(:, :, :, ind_NO))
+                print*, "*************** Minimum NO  = ", MINVAL(gchem_field(:, :, :, ind_NO))
+                
+
+                gchem_field(:, :, :, ind_NO) = gchem_field(:, :, :, ind_NO) + change_in_mixing_ratio(:,:,:)
                 deallocate(number_of_20dbz_per_altitude)
 
             endif
@@ -421,7 +430,7 @@ contains
 
         implicit none
 
-        real :: radar_threshold = 1                                           ! to match 20 dBZ, approximate qp mixing ratio (kg/kg) based on regression
+        real :: radar_threshold = 5e-4                                           ! to match 20 dBZ, approximate qp mixing ratio (kg/kg) based on regression
 
         ! General parameters for both cloud-to-ground (CTG) and intracloud (IC) lightning
         real :: time_between_flashes = 180                                      ! 3 minutes
@@ -460,7 +469,7 @@ contains
 
         ! If the desired time between flashes has passed, then do lightning
         if ( mod(nstep, lightning_time_step) == 0 ) then
-            allocate(vertical_function_profile(nz), change_in_mixing_ratio(nx, ny, nz))
+            allocate(vertical_function_profile(nzm), change_in_mixing_ratio(nx, ny, nzm))
             change_in_mixing_ratio = 0.
 
             do i = 1, nx
@@ -495,12 +504,14 @@ contains
                     
                     ! Integration for denominator
                     integral_of_vertical_function = 0.
-                    do k = 1, nz
+
+                    do k = 1, nzm
                         integral_of_vertical_function = integral_of_vertical_function + ( vertical_function_profile(k) * pres(k) * 100 ) * dz           ! 100 is to convert from mbar to Pa
                     enddo
-                    
+
                     if ( integral_of_vertical_function > 0 ) then
                             change_in_mixing_ratio(i,j,:) = ( no_production_per_flash / integral_of_vertical_function ) * universal_gas_constant * vertical_function_profile * tabs(i, j, :)
+                            print*, "change in mixing ratio @ 256 = ", change_in_mixing_ratio(i, j, 256)
                     endif
                 enddo
             enddo

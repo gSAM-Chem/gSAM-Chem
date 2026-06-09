@@ -16,7 +16,7 @@ module chemistry_params
    real, public :: sigma_accum = 2.04              ! stdev of accumulation mode
 
    real :: soil_wetness = 0.
-   real :: minimum_tropopause_height = 14000.
+   real :: minimum_tropopause_height = 14000.      ! in meters
 
    logical :: do_only_tropospheric_chemistry = .true.
    logical :: do_transport_loss = .false.
