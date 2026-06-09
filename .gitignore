@@ -5,10 +5,12 @@
 *.exe
 
 OUT_*
+OLD_DATA/*
 RESTART/*
 *.nc
 RUNDATA/*
 *.out 
+*.swp
 
 .vscode/
 .DS_Store
