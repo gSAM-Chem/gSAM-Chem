@@ -716,7 +716,7 @@ subroutine sgs_scalars()
           fluxttmp = fluxtch(:,:,k)
 
           call diffuse_scalar(gchem_field(:,:,:,k),fluxbtmp,fluxttmp, &
-                tkh, gchdiff(:,k),gchwsb(:,k), dummy, dummy, dummy, .false., .false.) 
+                tkh, gchdiff(:,k), gchwsb(:,k), dummy, dummy, dummy, .false., .false.) 
       end do
     end if
 

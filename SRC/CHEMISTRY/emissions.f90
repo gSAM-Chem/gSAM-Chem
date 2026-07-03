@@ -257,14 +257,14 @@ contains
 
         implicit none
 
-        real, allocatable, dimension(:,:,:, :) :: gchem_field                      ! parameter containing the surface fluxes
+        real, intent(inout) :: gchem_field(:,:,:,:)
 
         ! General parameters for both cloud-to-ground (CTG) and intracloud (IC) lightning
         real :: time_between_flashes = 180                                      ! 3 minutes
         integer :: lightning_time_step                                          ! How many time steps to skip before calculating lightning (function of dt)
         real :: moist_adiabatic_lapse_rate = 5e-3                               ! an estimate of the moist adiabatic lapse rate, in C / m
 
-        real :: radar_threshold = 5e-4                                           ! to match 20 dBZ, approximate qp mixing ratio (kg/kg) based on regression
+        real :: radar_threshold = 1e-4                                           ! to match 20 dBZ, approximate qp mixing ratio (kg/kg) based on regression
         
         ! Cloud-to-ground lightning
         real :: cloud_to_ground_isotherm = -15                                  ! isoterm of the Gaussian mean for CTG lightning, in Celsius
@@ -401,18 +401,23 @@ contains
                     enddo
                 enddo
 
-                if (any(change_in_mixing_ratio /= change_in_mixing_ratio)) then
-                    print*, 'NaN detected in change_in_mixing_ratio'
-                endif
-
                 print*, "*************** Maximum CTG lightning = ", MAXVAL(change_in_mixing_ratio)
                 print*, "*************** Minimum CTG lightning = ", MINVAL(change_in_mixing_ratio)
 
                 print*, "*************** Maximum NO  = ", MAXVAL(gchem_field(:, :, :, ind_NO))
                 print*, "*************** Minimum NO  = ", MINVAL(gchem_field(:, :, :, ind_NO))
-                
 
-                gchem_field(:, :, :, ind_NO) = gchem_field(:, :, :, ind_NO) + change_in_mixing_ratio(:,:,:)
+                do i = 1, nx
+                    do j = 1, ny 
+                        do k = 1, nzm
+                            gchem_field(i, j, k, ind_NO) = gchem_field(i, j, k, ind_NO) + change_in_mixing_ratio(i, j, k)
+                        enddo
+                    enddo
+                enddo
+
+                print*, "*************** Maximum NO AFTER ADDITION  = ", MAXVAL(gchem_field(:, :, :, ind_NO))
+                print*, "*************** Minimum NO AFTER ADDITION  = ", MINVAL(gchem_field(:, :, :, ind_NO))
+                
                 deallocate(number_of_20dbz_per_altitude)
 
             endif
@@ -430,13 +435,13 @@ contains
 
         implicit none
 
-        real :: radar_threshold = 5e-4                                           ! to match 20 dBZ, approximate qp mixing ratio (kg/kg) based on regression
+        real :: radar_threshold = 1e-4                                           ! to match 20 dBZ, approximate qp mixing ratio (kg/kg) based on regression
 
         ! General parameters for both cloud-to-ground (CTG) and intracloud (IC) lightning
         real :: time_between_flashes = 180                                      ! 3 minutes
         integer :: lightning_time_step                                          ! How many time steps to skip before calculating lightning (function of dt)
 
-        real, allocatable, dimension(:,:,:, :) :: gchem_field                      ! parameter containing the surface fluxes
+        real, intent(inout) :: gchem_field(:,:,:,:)
         real :: moist_adiabatic_lapse_rate = 5e-3                               ! an estimate of the moist adiabatic lapse rate, in C / m
 
         ! Cloud-to-ground lightning
@@ -542,9 +547,17 @@ contains
                     enddo
                 enddo
 
+                do i = 1, nx
+                    do j = 1, ny 
+                        do k = 1, nzm
+                            gchem_field(i, j, k, ind_NO) = gchem_field(i, j, k, ind_NO) + change_in_mixing_ratio(i, j, k)
+                        enddo
+                    enddo
+                enddo
+
                 ! print*, "*************** Maximum IC lightning", MAXVAL(change_in_mixing_ratio)
 
-                gchem_field(:,:,:, ind_NO) = gchem_field(:,:,:, ind_NO) + change_in_mixing_ratio(:,:,:)
+                ! gchem_field(:,:,:, ind_NO) = gchem_field(:,:,:, ind_NO) + change_in_mixing_ratio(:,:,:)
                 deallocate(x_area_of_storm)
             endif
             deallocate(vertical_function_profile, change_in_mixing_ratio)

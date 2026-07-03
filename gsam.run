@@ -1,11 +1,11 @@
 #!/bin/bash
-#SBATCH --ntasks=64
-#SBATCH --nodes=2
+#SBATCH --ntasks=256
+#SBATCH --nodes=8
 #SBATCH --partition=HERMES
 
 date
 setenv LD_LIBRARY_PATH  /usr/local/lib/netcdf-ifx:${LD_LIBRARY_PATH}
-mpirun -np 64 gSAM | tee sam.log
+mpirun -np 256 gSAM | tee sam.log
 date
 
 # Exit normally
