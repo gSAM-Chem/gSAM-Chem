@@ -2,13 +2,13 @@ module chemistry_params
 
    use cloudchem_Parameters, only: NVAR, NSPEC, NFIX
    use cloudchem_Monitor, only: SPC_NAMES
-   use grid, only : nx, ny, nzm
+   use grid, only: nx, ny, nzm
 
    implicit none
 
    real :: p0 = 1013.25    ! Pressure of 1atm in hPa
    real :: rhol = 1000.    ! Density of water, in kg/m^3
-   
+
    ! Used in heterogeneous chemistry
    real, public :: avgd = 6.022e23                 ! Avogadro's number
    real, public :: MW_air = 28.97                  ! Molar mass of dry air [g/mol]
@@ -16,10 +16,9 @@ module chemistry_params
    real, public :: sigma_accum = 2.04              ! stdev of accumulation mode
 
    real :: soil_wetness = 0.
-   real :: minimum_tropopause_height = 14000.      ! in meters
-
    logical :: do_only_tropospheric_chemistry = .true.
-   logical :: do_transport_loss = .false.
+   real :: minimum_tropopause_height = 14000.      ! in meters
+   integer :: tropopause_index(nx, ny) = nzm     ! precip. rate
 
    ! Only relevant if OH is fixed!
    logical :: do_OH_diurnal = .true.
@@ -27,6 +26,7 @@ module chemistry_params
    real :: OH_day_peak = 5.e6
 
    ! Dry Deposition
+   logical :: do_dry_deposition = .true.
    character(len=15), dimension(NSPEC) :: dry_deposition_species
    real*8, dimension(NSPEC) :: dry_deposition_velocities
 
@@ -43,7 +43,6 @@ module chemistry_params
    logical :: do_megan_isoprene = .true.
    logical :: do_surface_Isoprene_diurnal = .false.
    logical :: do_bdsnp_no = .true.
-   integer :: tropopause_index(nx, ny) = nzm     ! precip. rate 
 
    ! Lightning Switches
    logical :: do_CTG_lightning = .false.
@@ -63,10 +62,8 @@ module chemistry_params
    logical, dimension(NVAR), public :: flag_gchemvar_out3D  ! which chem array to output
 
    ! Define namelist variables
-   character(len=15), dimension(NSPEC) :: gas_init_name  ! array of desired names
-                                       !            for nonzero init
-   real*8, dimension(NSPEC) :: gas_init_value      ! array of init values
-                                               ! for corresponding gas_init_name
+   character(len=15), dimension(NSPEC) :: gas_init_name  ! array of desired names for nonzero init
+   real*8, dimension(NSPEC) :: gas_init_value      ! array of init values for corresponding gas_init_name
    character(len=15), dimension(NVAR) :: gas_out3D_name  ! array of desired gas names
-   
+
 end module chemistry_params

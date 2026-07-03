@@ -9,10 +9,12 @@ c-------------------------------------------------------
 	character caseid*40, version*20, filename*148, filename2*148
 	character name*80
 	integer(4) nzm, ntime,npar
-	real time(50000),z(5000),p(5000),dz(500)
-        real f(500000), f1(500000), f2(500000), parms(500000)
-        real tmp(5000), tmp1(5000), tmp2(5000), tmp3(5000)
-        real rho(5000)
+	integer(4), parameter :: nzmax = 550
+	integer(4), parameter :: ntmax = 10000
+	real time(ntmax),z(nzmax),p(nzmax),dz(nzmax)
+        real f(nzmax*ntmax), f1(nzmax*ntmax), parms(ntmax*nparms)
+        real tmp(ntmax), tmp1(ntmax), tmp2(ntmax), tmp3(ntmax)
+        real rho(nzmax)
 	real cape,cin
 
 	integer(4) i,j,k,l,m
@@ -49,6 +51,20 @@ c-------------------------------------------------------
 c-------------------------------------------------------	
 c Count how many time points in a file:
 	call HBUF_info(2,ntime,time,nzm,z,dz,p,caseid,version)
+
+c =========== begin ntime/nzm check =====================
+	   write(*,928) ntime, ntmax, nzm, nzmax
+ 928	   format('ntime = ',i6,' ntmax = ', i6,
+     &            ' nzm = ',i5,' nzmax = ',i5)
+c Check to make sure the arrays are large enough to read this data
+	if((ntime.gt.ntmax).OR.(nzm.gt.nzmax)) then
+	   write(*,*) 'ntime or nzm too large for current array sizes'
+	   write(*,*) 'Increase the size of ntmax or nzmax in '
+	   write(*,*) 'UTIL/SRC/stat2nc.f'
+	   STOP 'ntime and/or nzm too big in stat2nc.f'
+	end if
+c =========== end check =====================
+	
 	call HBUF_read(2,nzm,'RHO',1,1,rho,m)
 	print*,'.......',ntime
 	print*,(time(k),k=1,ntime/3)

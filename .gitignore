@@ -11,6 +11,7 @@ RESTART/*
 RUNDATA/*
 *.out 
 *.swp
+sam.log
 
 .vscode/
 .DS_Store

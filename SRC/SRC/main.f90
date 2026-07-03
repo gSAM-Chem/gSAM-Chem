@@ -11,7 +11,7 @@ use vars
 use hbuffer
 use microphysics
 use sgs
-use chemistry, only: chem_init, chem_proc
+use chemistry, only: chem_init, chem_proc, chem_finalize
 use tracers
 use movies, only: init_movies
 use cup, only: cup_tend
@@ -393,5 +393,7 @@ call t_prf(rank)
 if(masterproc) print*,"Run has ended normally!"
 call task_barrier() ! make sure every MPI task reached this point before ending.
 call task_stop()
+
+call chem_finalize()
 
 end program sam
