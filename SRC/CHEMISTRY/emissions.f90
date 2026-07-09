@@ -336,8 +336,9 @@ contains
         integer :: lightning_time_step                                          ! How many time steps to skip before calculating lightning (function of dt)
         real :: moist_adiabatic_lapse_rate = 5e-3                               ! an estimate of the moist adiabatic lapse rate, in C / m
 
-        real, parameter:: radar_threshold = 1e-4                                           ! to match 20 dBZ, approximate qp mixing ratio (kg/kg) based on regression
-        
+        ! real, parameter:: radar_threshold = 1e-4                                           ! to match 20 dBZ, approximate qp mixing ratio (kg/kg) based on regression
+        real, parameter:: radar_threshold = 20
+
         ! Cloud-to-ground lightning
         real, parameter :: cloud_to_ground_isotherm = -15                                  ! isoterm of the Gaussian mean for CTG lightning, in Celsius
         integer :: vertical_index_for_isotherm                                  ! index of the CTG mean isotherm
@@ -432,14 +433,11 @@ contains
                 number_of_20dbz_per_altitude = 0.
                 refl_10cm = 0.
                 call calculate_radar_reflectivity()
-                print*, "Maximum radar reflectivity: ", MAXVAL(refl_10cm)
-                print*, "Minimum radar reflectivity: ", MINVAL(refl_10cm)
-                print*, "Mean radar reflectivity: ", SUM(refl_10cm) / SIZE(refl_10cm)                
 
                 do k = 1,nzm 
                     do i = 1,nx
                         do j = 1,ny
-                            if ( ( qpl(i,j,k) + qpi(i,j,k) ) >= radar_threshold ) then
+                            if ( refl_10cm(i, j, k) >= radar_threshold ) then
                                 number_of_20dbz_per_altitude(k) = number_of_20dbz_per_altitude(k) + 1
                             else
                                 change_in_mixing_ratio(i,j,k) = 0.
@@ -484,7 +482,8 @@ contains
 
         implicit none
 
-        real :: radar_threshold = 1e-4                                           ! to match 20 dBZ, approximate qp mixing ratio (kg/kg) based on regression
+        ! real :: radar_threshold = 1e-4                                           ! to match 20 dBZ, approximate qp mixing ratio (kg/kg) based on regression
+        real :: radar_threshold = 20
 
         ! General parameters for both cloud-to-ground (CTG) and intracloud (IC) lightning
         real :: time_between_flashes = 180                                      ! 3 minutes
@@ -566,11 +565,13 @@ contains
 
             if ( IC_decaria ) then
                 x_area_of_storm = 0.
+                refl_10cm = 0.
+                call calculate_radar_reflectivity()
 
                 do k = 1,nzm 
                     do i = 1,nx
                         do j = 1,ny
-                            if ( ( (qcl(i, j, k) + qpl(i, j, k) + qci(i, j, k) + qpi(i, j, k)) * 1000. > 0.01 ) .and. ( maxval( qpl + qpi ) >= radar_threshold ) ) then
+                            if ( ( (qcl(i, j, k) + qpl(i, j, k) + qci(i, j, k) + qpi(i, j, k)) * 1000. > 0.01 ) .and. ( maxval( refl_10cm ) >= radar_threshold ) ) then
                                 x_area_of_storm(k) = x_area_of_storm(k) + 1
                             else
                                 change_in_mixing_ratio(i,j,k) = 0.

@@ -12,6 +12,7 @@ RUNDATA/*
 *.out 
 *.swp
 sam.log
+*.stat
 
 .vscode/
 .DS_Store
