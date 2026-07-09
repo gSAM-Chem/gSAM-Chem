@@ -1,20 +1,20 @@
 &PARAMETERS
     !! RUN CONTROLS !!
-    caseid                  = 'gSAM_larger_domain_512_256',
-    nrestart                = 1,
+    caseid                  = 'gSAM_larger_domain_512_256_separated_isoprene',
+    nrestart                = 0,
 
     dt                      = 1.0,
-    nstop                   = 1036800,
-    date0 = 20140302100000 ! 10 AM UTC is 6 AM Amazon Standard Time
+    nstop                   = 345600,
+    date0                   = 20140302100000  ! 10 AM UTC is 6 AM Amazon Standard Time
 
     dx                      = 66.66666,
-    dy		            = 66.66666,
+    dy		                = 66.66666,
     doconstdz               = .false.,
 
     LAND                    = .true.,
 
     nprint                  = 100,
-    nstat 	      	    = 300,
+    nstat 	      	        = 300,
     nstatfrq                = 30,
     doSAMconditionals       = .false.,
     dosatupdnconditionals   = .false.,
@@ -32,7 +32,7 @@
     !! PHYSICS CONTROLS !!
     OCEAN                   = .false.,
 
-    dosgs		             = .true.,
+    dosgs		            = .true.,
     dodamping 	            = .true.,
     doupperbound            = .true.,
     docloud 	            = .true.,
@@ -40,7 +40,7 @@
 
     longitude0              = -59.002,
     latitude0               = -2.144,
-    docoriolis  	    = .true.,
+    docoriolis  	        = .true.,
     
     dolongwave	            = .true.,
     doshortwave	            = .true.,
@@ -52,7 +52,7 @@
     rad3Dout                = .false.,
 
     dosurface 	            = .true.,
-    dolargescale 	    = .true.,
+    dolargescale 	        = .true.,
     dosfcforcing            = .true.,
 
     donudging_uv            = .false.,
@@ -66,9 +66,8 @@
 
     ug                      = 0.0,
     vg                      = 0.0,
-    
     perturb_type            = 1,
-    
+
     dochem = .true.,
 
 
@@ -96,7 +95,8 @@
     do_megan_isoprene       = .true.            ! Choose either MEGAN isoprene or diurnal isoprene!
     do_surface_Isoprene_diurnal = .false.,
     do_bdsnp_no             = .true.,
-    
+    canopy_index = 2,
+
     !! LIGHTNING EMISSIONS !!
     do_CTG_lightning        = .true.,
     do_IC_lightning         = .true.,
@@ -106,7 +106,7 @@
     CTG_price_and_rind      = .false.,
 
     !! HETEROGENEOUS CHEMISTRY !!
-    do_iepox_droplet_chem   = .true.,
+    do_iepox_droplet_chem   = .false.,
     do_iepox_aero_chem      = .false.,
     hi_org                  = .false.,
 
@@ -125,7 +125,7 @@
 
 
 &MICRO_M2005
-    doicemicro              = .true.,
+    doicemicro               = .true.,
     !dograupel               = .true.,
 
     !bloss: first option, fixed cloud droplet number concentration (from LES specs)

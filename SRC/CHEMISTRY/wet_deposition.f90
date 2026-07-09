@@ -2,7 +2,7 @@ module wet_deposition
 
    use cloudchem_Parameters, only: NVAR
    use chemistry_params, only: wet_deposition_species, k0_constants, cr_constants, rhol, do_rainout, do_washout, do_convective_scavenging, wet_deposition_time_step
-   use grid, only: z, nzm, nx, ny
+   use grid, only: z, nzm, nx, ny, dimx1_s, dimx2_s, dimy1_s, dimy2_s
    use cloudchem_Monitor, only: SPC_NAMES
    use vars, only: qcl, qpl, tabs, w, dtn, precsfc
    implicit none
@@ -18,7 +18,7 @@ module wet_deposition
 CONTAINS
 
    subroutine wet_deposition_driver(gchem_field, M_profile, change_in_qcl, change_in_qpl)
-      real, intent(inout) :: gchem_field(:, :, :, :)
+      real, intent(inout) :: gchem_field(dimx1_s:dimx2_s, dimy1_s:dimy2_s, nzm, NVAR)
       real, intent(in)    :: M_profile(:)
       real, intent(in)    :: change_in_qcl(:, :, :)
       real, intent(in)    :: change_in_qpl(:, :, :)
@@ -37,7 +37,7 @@ CONTAINS
    end subroutine wet_deposition_driver
 
    subroutine convective_scavenging(gchem_field, M_profile, change_in_qcl, change_in_qpl)
-      real, intent(inout) :: gchem_field(:, :, :, :)
+      real, intent(inout) :: gchem_field(dimx1_s:dimx2_s, dimy1_s:dimy2_s, nzm, NVAR)
       real, intent(in)    :: M_profile(:)
       real, intent(in)    :: change_in_qcl(:, :, :)
       real, intent(in)    :: change_in_qpl(:, :, :)
@@ -83,12 +83,12 @@ scavenging_rate_constant = ((epsilon*fraction_in_liquid_phase) + fraction_in_ice
    end subroutine convective_scavenging
 
    subroutine rainout(gchem_field, M_profile, change_in_qcl, change_in_qpl)
-      real, intent(inout) :: gchem_field(:, :, :, :)
+      real, intent(inout) :: gchem_field(dimx1_s:dimx2_s, dimy1_s:dimy2_s, nzm, NVAR)
       real, intent(in)    :: M_profile(:)
       real, intent(in)    :: change_in_qcl(:, :, :)
       real, intent(in)    :: change_in_qpl(:, :, :)
 
-      real :: i, j, k, v, v_selected
+      integer :: i, j, k, v, v_selected
       real :: cloud_conversion_rate_constant, fraction_in_liquid_phase, rainout_rate_constant, cloud_mixing_ratio_threshold
       real :: temp_corrected_Kh, fraction_rained_out, liquid_water_content
 
@@ -132,7 +132,7 @@ rainout_rate_constant = ((epsilon*fraction_in_liquid_phase) + fraction_in_ice_ph
    end subroutine rainout
 
    subroutine washout(gchem_field, M_profile, change_in_qcl, change_in_qpl)
-      real, intent(inout) :: gchem_field(:, :, :, :)
+      real, intent(inout) :: gchem_field(dimx1_s:dimx2_s, dimy1_s:dimy2_s, nzm, NVAR)
       real, intent(in)    :: M_profile(:)
       real, intent(in)    :: change_in_qcl(:, :, :)
       real, intent(in)    :: change_in_qpl(:, :, :)

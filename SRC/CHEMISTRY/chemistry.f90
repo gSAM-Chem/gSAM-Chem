@@ -20,7 +20,7 @@ module chemistry
    use cloudchem_Rates, only: Update_RCONST, Update_PHOTO
    use cloudchem_Integrator, only: Integrate
    use cloudchem_Parameters, only: NVAR, NSPEC, NFIX, ind_IEPOX, ind_ISOP1Nit, ind_ISOPOOH, &
-                                   ind_ISOPDiNit, ind_OH, ind_O3, ind_CO, NREACT  ! NSPEC = NVAR + NFIX
+                                   ind_ISOPDiNit, ind_OH, ind_O3, ind_CO, ind_ISOP, NREACT  ! NSPEC = NVAR + NFIX
 
    use chemistry_params, only: p0, rhol, do_only_tropospheric_chemistry, &
                                do_OH_diurnal, OH_night, OH_day_peak, do_rainout, do_washout, &
@@ -30,7 +30,9 @@ module chemistry
                                do_IC_lightning, do_CTG_lightning, IC_decaria, CTG_decaria_reflectivity, CTG_price_and_rind, &
                                do_iepox_droplet_chem, do_iepox_aero_chem, hi_org, pHdrop, pHaero, &
                                gas_init_name, gas_init_value, gas_out3D_name, flag_gchemvar_out3D, &
-                               MW_air, avgd, rho_aerosol, sigma_accum, soil_wetness, tropopause_index, minimum_tropopause_height
+                               MW_air, avgd, rho_aerosol, sigma_accum, soil_wetness, tropopause_index, minimum_tropopause_height, &
+                               canopy_index
+
 
    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
    !! SUBCOMPONENTS OF CHEMISTRY !!
@@ -38,7 +40,7 @@ module chemistry
    use het_chem, only: het_chem_driver, het_chem_initialize, het_chem_finalize
    use chem_aqueous, only: aq_species_names, naqchem_fields, flag_aqchemvar_out3D, flag_aqchemgasvar_out3D, aq_gasprod_species_names
    use chem_aerosol, only: ar_species_names, narchem_fields, flag_archemvar_out3D
-   use emissions, only: surface_emission_flux_driver, lightning_decaria_ic, lightning_decaria_ctg
+   use emissions, only: surface_emission_flux_driver, lightning_decaria_ic, lightning_decaria_ctg, emissions_init, emissions_finalize
    use deposition, only: dry_deposition_driver
    use wet_deposition, only: wet_deposition_driver
 
@@ -125,7 +127,7 @@ CONTAINS
          do_megan_isoprene, do_surface_Isoprene_diurnal, do_bdsnp_no, &
          do_IC_lightning, do_CTG_lightning, IC_decaria, CTG_decaria_reflectivity, CTG_price_and_rind, &
          do_iepox_droplet_chem, do_iepox_aero_chem, hi_org, pHdrop, pHaero, &
-         gas_init_name, gas_init_value, gas_out3D_name, soil_wetness
+         gas_init_name, gas_init_value, gas_out3D_name, soil_wetness, canopy_index
 
       ! Read in namelist from prm file
       NAMELIST /BNCUIODSBJCB/ place_holder
@@ -317,6 +319,8 @@ CONTAINS
       interactive_soil_wetness(:, :) = soil_wetness
       tropopause_temp = 0.
       tropopause_index(:, :) = nzm
+
+      call emissions_init()
    end subroutine chem_init
 
    subroutine chem_proc()
@@ -330,7 +334,7 @@ CONTAINS
 
       integer :: i, j, k, n, ispecies                       ! Indices, n is for KPP and ispecies for heterogeneous chem.
       real :: OH_conc                                       ! OH gas concentration [molecules/cm3], only for fixed OH runs
-      real :: shortwave_radiation_threshold = 2000.       ! Downward shortwave radiation to normalize SUN by, [W m-2]
+      real :: shortwave_radiation_threshold = 1500.       ! Downward shortwave radiation to normalize SUN by, [W m-2]
       integer :: tropopause_buffer = 5                   ! Buffer zone (in indices) to do chemistry above tropopause
 
       ! For KPP integration
@@ -370,6 +374,8 @@ CONTAINS
          call find_tropopause()
       end if
 
+      ! print*, "Before chemistry: is this zero? ", SUM(gchem_field(:, :, canopy_index, ind_ISOP)) / SIZE(gchem_field(:, :, canopy_index, ind_ISOP))
+
       do j = 1, ny
          do i = 1, nx
             gas_column_tend_profile(:, :) = 0.
@@ -406,7 +412,7 @@ CONTAINS
                   end if
                end if
 
-               call Fun(var_profile(k, :), fixed_profile(k, :), rate_const(k, :), gas_column_tend_profile(k, :))     ! Calculate derivatives
+               call Fun(var_profile(k, 1:NVAR), fixed_profile(k, 1:NFIX), rate_const(k, 1:NREACT), gas_column_tend_profile(k, 1:NVAR))     ! Calculate derivatives
                CALL Integrate(0.0, dtn, ICNTRL, RCNTRL, ISTATUS, RSTATE, IERR)       ! Use RCONST and Func to integrate the concentrations a timestep
 
                IF (IERR < 0) THEN
@@ -423,10 +429,14 @@ CONTAINS
 
       call check_nan ! Check if there are any nans in gchem_field after KPP
 
+      ! print*, "After chemistry: is this zero? ", SUM(gchem_field(:, :, canopy_index, ind_ISOP)) / SIZE(gchem_field(:, :, canopy_index, ind_ISOP))
+
       !!!!!!!!!!!!!!!!!!!!!!!!!
       !! II. DRY DEPOSITION !!!
       !!!!!!!!!!!!!!!!!!!!!!!!!
-      call dry_deposition_driver(gchem_field, g_depos_horiz_mean_tend_ISOPOOH, g_depos_horiz_mean_tend_IEPOX)
+      call dry_deposition_driver(gchem_field, canopy_index, g_depos_horiz_mean_tend_ISOPOOH, g_depos_horiz_mean_tend_IEPOX)
+
+      ! print*, "After deposition: is this zero? ", SUM(gchem_field(:, :, canopy_index, ind_ISOP)) / SIZE(gchem_field(:, :, canopy_index, ind_ISOP))
 
       !!!!!!!!!!!!!!!!!!!!!!!!!!
       !! III. WET DEPOSITION !!!
@@ -464,6 +474,7 @@ CONTAINS
       archem_horiz_mean_tend = archem_horiz_mean_tend/(nx*ny)
       g_depos_horiz_mean_tend_ISOPOOH = g_depos_horiz_mean_tend_ISOPOOH/(nx*ny)
       g_depos_horiz_mean_tend_IEPOX = g_depos_horiz_mean_tend_IEPOX/(nx*ny)
+      ! print*, "After chem_proc =", SUM(gchem_field(:, :, canopy_index, ind_ISOP))      
       call t_stopf('chem_proc')     ! End timing
    end subroutine chem_proc
 
@@ -597,6 +608,7 @@ CONTAINS
          ! if (do_iepox_aero_chem .or. do_iepox_droplet_chem) then
          call het_chem_finalize()
          ! end if
+         call emissions_finalize()
 
          if (ierr .ne. 0) then
             write (*, *) 'Failed to deallocated chem arrays on proc ', rank
@@ -610,7 +622,9 @@ CONTAINS
       soil_NO_emission_flux(:) = 0.
       isop_emission_flux(:) = 0.
 
-      call surface_emission_flux_driver(fluxbch, M_profile, isop_emission_flux, soil_NO_emission_flux)
+      if ( do_megan_isoprene .or. do_bdsnp_no .or. do_surface_Isoprene_diurnal ) then 
+         call surface_emission_flux_driver(gchem_field, fluxbch, canopy_index, M_profile, isop_emission_flux, soil_NO_emission_flux)
+      endif
 
       if (do_CTG_lightning) then
          call lightning_decaria_ctg(gchem_field)
@@ -619,7 +633,6 @@ CONTAINS
       if (do_IC_lightning) then
          call lightning_decaria_ic(gchem_field)
       end if
-
    end subroutine chem_flux
 
    subroutine chem_print()
@@ -645,6 +658,7 @@ CONTAINS
       call t_startf('chem_statistics')
 
       zeros(:) = 0.
+
       do n = 1, ngchem_fields
          ! compute horizontal mean of all gas chem fields
          do k = 1, nzm

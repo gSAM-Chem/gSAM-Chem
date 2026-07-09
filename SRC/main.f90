@@ -11,7 +11,9 @@ use vars
 use hbuffer
 use microphysics
 use sgs
-use chemistry, only: chem_init, chem_proc
+use chemistry, only: chem_init, chem_proc, gchem_field
+use cloudchem_Parameters, only: ind_ISOP
+
 use tracers
 use movies, only: init_movies
 use cup, only: cup_tend
@@ -220,6 +222,7 @@ do while(nstep.lt.nstop.and.nelapse.gt.0)
 !       advection of momentum:
 
      call advect_mom()
+     ! if(masterproc) print *, 'after advection of momentum', gchem_field(1,1,2,ind_ISOP)
 
 !-----------------------------------------------------------
 !       Coriolis force:
@@ -234,6 +237,7 @@ do while(nstep.lt.nstop.and.nelapse.gt.0)
 !  SGS physics:
 
      if (dosgs) call sgs_proc()
+     ! if(masterproc) print *, 'after SGS', gchem_field(1,1,2,ind_ISOP)
 
 !----------------------------------------------------------
 !     Fill boundaries for SGS diagnostic fields:
@@ -283,6 +287,7 @@ do while(nstep.lt.nstop.and.nelapse.gt.0)
 !      advection of scalars :
 
      call advect_all_scalars()
+     ! if(masterproc) print *, 'after scalar advection', gchem_field(1,1,2,ind_ISOP)
 
 !----------------------------------------------------------
 !     Update boundaries for scalars to prepare for SGS effects:
@@ -293,6 +298,7 @@ do while(nstep.lt.nstop.and.nelapse.gt.0)
 !      SGS effects on scalars :
 
      if (dosgs) call sgs_scalars()
+     ! if (masterproc) print*, "after sgs_scalars=", gchem_field(1,1,2,ind_ISOP)
 
 !-----------------------------------------------------------
 !       Handle upper boundary for scalars
@@ -347,9 +353,8 @@ do while(nstep.lt.nstop.and.nelapse.gt.0)
           
 !----------------------------------------------------------
 !  collect statistics, write restart files, print running data, etc.
-
    call stepout(nstatsteps)
-  
+
 !----------------------------------------------------------
 !  print timing statistics table:
    if(mod(nstep,1000).eq.0) call t_prf(rank)
