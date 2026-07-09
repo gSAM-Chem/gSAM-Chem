@@ -530,104 +530,104 @@ subroutine sgs_scalars()
      lhf_top_xy(:,:) = lhf_top_xy(:,:) + fluxtq(:,:) * dtfactor
 
 
-     if(dochamber) then
-       if(dostatis) then
-        fluxwallt(:,:) = 0.
-        fluxwallq(:,:) = 0.
-       end if
-       call task_rank_to_index(rank,it,jt)
-       if(it.eq.0) then
-        if(dosidewalls) t_wall = t_bot
-        do k=1,nzm 
-         t(:0,:,k) = t_wall+gamaz(k) 
-         q(:0,:,k) = qsatw(t_wall,pres(k))*coef 
-        end do
-        if(dostatis) then
-         do k=1,nzm
-          do j=1,ny
-            fluxwallt(k,1) = fluxwallt(k,1) - rho(k)*(t(1,j,k)-t(0,j,k))
-            fluxwallq(k,1) = fluxwallq(k,1) - rho(k)*(q(1,j,k)-q(0,j,k))
-          end do
-         end do
-        end if
-       end if
-       if(it+nx.eq.nx_gl) then
-        if(dosidewalls) t_wall = t_top
-        do k=1,nzm
-         t(nx+1:,:,k) = t_wall+gamaz(k)
-         q(nx+1:,:,k) = qsatw(t_wall,pres(k))*coef
-        end do
-        if(dostatis) then
-         do k=1,nzm
-          do j=1,ny
-            fluxwallt(k,3) = fluxwallt(k,3) - rho(k)*(t(nx+1,j,k)-t(nx,j,k))
-            fluxwallq(k,3) = fluxwallq(k,3) - rho(k)*(q(nx+1,j,k)-q(nx,j,k))
-          end do
-         end do
-        end if
-       end if
-       if(jt.eq.0) then
-        if(dosidewalls) t_wall = t_bot
-        do k=1,nzm
-         t(:,:0,k) = t_wall+gamaz(k)
-         q(:,:0,k) = qsatw(t_wall,pres(k))*coef
-        end do
-        if(dostatis) then
-         do k=1,nzm
-          do i=1,nx
-            fluxwallt(k,4) = fluxwallt(k,4) - rho(k)*(t(i,1,k)-t(i,0,k))
-            fluxwallq(k,4) = fluxwallq(k,4) - rho(k)*(q(i,1,k)-q(i,0,k))
-          end do
-         end do
-        end if
-       end if
-       if(jt+ny.eq.ny_gl) then
-        if(dosidewalls) t_wall = t_top
-        do k=1,nzm
-         t(:,ny+1:,k) = t_wall+gamaz(k)
-         q(:,ny+1:,k) = qsatw(t_wall,pres(k))*coef
-        end do
-        if(dostatis) then
-         do k=1,nzm
-          do i=1,nx
-            fluxwallt(k,2) = fluxwallt(k,2) - rho(k)*(t(i,ny+1,k)-t(i,ny,k))
-            fluxwallq(k,2) = fluxwallq(k,2) - rho(k)*(q(i,ny+1,k)-q(i,ny,k))
-          end do
-         end do
-        end if
-       end if
-       if(dostatis) then
-        if(dompi) then
-         call task_sum_real(fluxwallt(:,1),buf,nzm)
-         fluxwallt(:,1) = buf(:)
-         call task_sum_real(fluxwallt(:,2),buf,nzm)
-         fluxwallt(:,2) = buf(:)
-         call task_sum_real(fluxwallt(:,3),buf,nzm)
-         fluxwallt(:,3) = buf(:)
-         call task_sum_real(fluxwallt(:,4),buf,nzm)
-         fluxwallt(:,4) = buf(:)
-         call task_sum_real(fluxwallq(:,1),buf,nzm)
-         fluxwallq(:,1) = buf(:)
-         call task_sum_real(fluxwallq(:,2),buf,nzm)
-         fluxwallq(:,2) = buf(:)
-         call task_sum_real(fluxwallq(:,3),buf,nzm)
-         fluxwallq(:,3) = buf(:)
-         call task_sum_real(fluxwallq(:,4),buf,nzm)
-         fluxwallq(:,4) = buf(:)
-        end if
-        coef = DIFF_DNS*2./(dy*ny_gl)
-        fluxwallt(:,1) = fluxwallt(:,1)*coef*cp 
-        fluxwallt(:,3) = fluxwallt(:,3)*coef*cp 
-        fluxwallq(:,1) = fluxwallq(:,1)*coef*lcond 
-        fluxwallq(:,3) = fluxwallq(:,3)*coef*lcond 
-        coef = DIFF_DNS*2./(dx*nx_gl)
-        fluxwallt(:,2) = fluxwallt(:,2)*coef*cp 
-        fluxwallt(:,4) = fluxwallt(:,4)*coef*cp 
-        fluxwallq(:,2) = fluxwallq(:,2)*coef*lcond 
-        fluxwallq(:,4) = fluxwallq(:,4)*coef*lcond 
-       end if
+    !  if(dochamber) then
+    !    if(dostatis) then
+    !     fluxwallt(:,:) = 0.
+    !     fluxwallq(:,:) = 0.
+    !    end if
+    !    call task_rank_to_index(rank,it,jt)
+    !    if(it.eq.0) then
+    !     if(dosidewalls) t_wall = t_bot
+    !     do k=1,nzm 
+    !      t(:0,:,k) = t_wall+gamaz(k) 
+    !      q(:0,:,k) = qsatw(t_wall,pres(k))*coef 
+    !     end do
+    !     if(dostatis) then
+    !      do k=1,nzm
+    !       do j=1,ny
+    !         fluxwallt(k,1) = fluxwallt(k,1) - rho(k)*(t(1,j,k)-t(0,j,k))
+    !         fluxwallq(k,1) = fluxwallq(k,1) - rho(k)*(q(1,j,k)-q(0,j,k))
+    !       end do
+    !      end do
+    !     end if
+    !    end if
+    !    if(it+nx.eq.nx_gl) then
+    !     if(dosidewalls) t_wall = t_top
+    !     do k=1,nzm
+    !      t(nx+1:,:,k) = t_wall+gamaz(k)
+    !      q(nx+1:,:,k) = qsatw(t_wall,pres(k))*coef
+    !     end do
+    !     if(dostatis) then
+    !      do k=1,nzm
+    !       do j=1,ny
+    !         fluxwallt(k,3) = fluxwallt(k,3) - rho(k)*(t(nx+1,j,k)-t(nx,j,k))
+    !         fluxwallq(k,3) = fluxwallq(k,3) - rho(k)*(q(nx+1,j,k)-q(nx,j,k))
+    !       end do
+    !      end do
+    !     end if
+    !    end if
+    !    if(jt.eq.0) then
+    !     if(dosidewalls) t_wall = t_bot
+    !     do k=1,nzm
+    !      t(:,:0,k) = t_wall+gamaz(k)
+    !      q(:,:0,k) = qsatw(t_wall,pres(k))*coef
+    !     end do
+    !     if(dostatis) then
+    !      do k=1,nzm
+    !       do i=1,nx
+    !         fluxwallt(k,4) = fluxwallt(k,4) - rho(k)*(t(i,1,k)-t(i,0,k))
+    !         fluxwallq(k,4) = fluxwallq(k,4) - rho(k)*(q(i,1,k)-q(i,0,k))
+    !       end do
+    !      end do
+    !     end if
+    !    end if
+    !    if(jt+ny.eq.ny_gl) then
+    !     if(dosidewalls) t_wall = t_top
+    !     do k=1,nzm
+    !      t(:,ny+1:,k) = t_wall+gamaz(k)
+    !      q(:,ny+1:,k) = qsatw(t_wall,pres(k))*coef
+    !     end do
+    !     if(dostatis) then
+    !      do k=1,nzm
+    !       do i=1,nx
+    !         fluxwallt(k,2) = fluxwallt(k,2) - rho(k)*(t(i,ny+1,k)-t(i,ny,k))
+    !         fluxwallq(k,2) = fluxwallq(k,2) - rho(k)*(q(i,ny+1,k)-q(i,ny,k))
+    !       end do
+    !      end do
+    !     end if
+    !    end if
+    !    if(dostatis) then
+    !     if(dompi) then
+    !      call task_sum_real(fluxwallt(:,1),buf,nzm)
+    !      fluxwallt(:,1) = buf(:)
+    !      call task_sum_real(fluxwallt(:,2),buf,nzm)
+    !      fluxwallt(:,2) = buf(:)
+    !      call task_sum_real(fluxwallt(:,3),buf,nzm)
+    !      fluxwallt(:,3) = buf(:)
+    !      call task_sum_real(fluxwallt(:,4),buf,nzm)
+    !      fluxwallt(:,4) = buf(:)
+    !      call task_sum_real(fluxwallq(:,1),buf,nzm)
+    !      fluxwallq(:,1) = buf(:)
+    !      call task_sum_real(fluxwallq(:,2),buf,nzm)
+    !      fluxwallq(:,2) = buf(:)
+    !      call task_sum_real(fluxwallq(:,3),buf,nzm)
+    !      fluxwallq(:,3) = buf(:)
+    !      call task_sum_real(fluxwallq(:,4),buf,nzm)
+    !      fluxwallq(:,4) = buf(:)
+    !     end if
+    !     coef = DIFF_DNS*2./(dy*ny_gl)
+    !     fluxwallt(:,1) = fluxwallt(:,1)*coef*cp 
+    !     fluxwallt(:,3) = fluxwallt(:,3)*coef*cp 
+    !     fluxwallq(:,1) = fluxwallq(:,1)*coef*lcond 
+    !     fluxwallq(:,3) = fluxwallq(:,3)*coef*lcond 
+    !     coef = DIFF_DNS*2./(dx*nx_gl)
+    !     fluxwallt(:,2) = fluxwallt(:,2)*coef*cp 
+    !     fluxwallt(:,4) = fluxwallt(:,4)*coef*cp 
+    !     fluxwallq(:,2) = fluxwallq(:,2)*coef*lcond 
+    !     fluxwallq(:,4) = fluxwallq(:,4)*coef*lcond 
+    !    end if
        
-     end if ! dochamber
+    !  end if ! dochamber
 
    end if ! dodns
 !=====================================================================
@@ -711,7 +711,6 @@ subroutine sgs_scalars()
       call chem_flux()
 
       do k = 1,ngchem_fields
-        
           fluxbtmp = fluxbch(:,:,k)
           fluxttmp = fluxtch(:,:,k)
 

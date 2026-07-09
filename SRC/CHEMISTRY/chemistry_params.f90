@@ -43,6 +43,7 @@ module chemistry_params
    logical :: do_megan_isoprene = .true.
    logical :: do_surface_Isoprene_diurnal = .false.
    logical :: do_bdsnp_no = .true.
+   integer :: canopy_index = 1
 
    ! Lightning Switches
    logical :: do_CTG_lightning = .false.
@@ -51,6 +52,7 @@ module chemistry_params
    logical :: IC_decaria = .false.
    logical :: CTG_decaria_reflectivity = .false.
    logical :: CTG_price_and_rind = .false.
+   
 
    ! Heterogeneous Chemistry
    logical :: do_iepox_droplet_chem = .false., do_iepox_aero_chem = .false., hi_org = .true.
