@@ -799,6 +799,10 @@ do j = 1,ny
            precsfc(i,j) = precsfc(i,j) + sfcpcp
            precsfcsnow(i,j) = precsfcsnow(i,j) + sfcicepcp
          end if
+
+         ! print*, "MAXVAL_PRECSFC: ", MAXVAL(precsfc)
+         ! print*, "MAXVAL_PRECINST: ", MAXVAL(precinst)
+
          prec_xy(i,j) = prec_xy(i,j) + sfcpcp
          preca_xy(i,j) = preca_xy(i,j) + sfcpcp
          precs_xy(i,j) = precs_xy(i,j) + sfcicepcp

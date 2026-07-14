@@ -157,7 +157,7 @@ call t_startf ('precip_fall')
 !   Precipitation fallout in SAM1MOM, KH3, and DRIZZLE  microphysics
 !
 
-    precinst(:,:) = 0.
+    ! precinst(:,:) = 0. ! JY: Bandaid fix because it zeroes out rain in M2005 when it shouldn't
 
     if(collect_coars) then
       misc = 0.

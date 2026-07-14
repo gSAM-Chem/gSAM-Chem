@@ -468,6 +468,7 @@
            if(masterproc)print*,'Exiting...'
              call task_abort()
         end if
+        
         close(65)
         if(rank.eq.nsubdomains-1) then
            print *,'Case:',caseid

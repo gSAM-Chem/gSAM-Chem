@@ -1,10 +1,11 @@
 &PARAMETERS
     !! RUN CONTROLS !!
-    caseid                  = 'gSAM_larger_domain_512_256_separated_isoprene',
-    nrestart                = 0,
+    caseid                  = 'gSAM_larger_domain_512_256_separated_isoprene_radar_reflectivity_testing_prec',
+    nrestart                = 1,
+    restart_sep		        = .true.,
 
     dt                      = 1.0,
-    nstop                   = 345600,
+    nstop                   = 100800,
     date0                   = 20140302100000  ! 10 AM UTC is 6 AM Amazon Standard Time
 
     dx                      = 66.66666,
@@ -106,7 +107,7 @@
     CTG_price_and_rind      = .false.,
 
     !! HETEROGENEOUS CHEMISTRY !!
-    do_iepox_droplet_chem   = .false.,
+    do_iepox_droplet_chem   = .true.,
     do_iepox_aero_chem      = .false.,
     hi_org                  = .false.,
 
@@ -126,11 +127,12 @@
 
 &MICRO_M2005
     doicemicro               = .true.,
-    !dograupel               = .true.,
+    dograupel                = .true.,
 
-    !bloss: first option, fixed cloud droplet number concentration (from LES specs)
-    !dopredictNc             = .true.,
-    !Nc0                     = 30.,
+    dopredictNc              = .true.,
+    Nc0                      = 30.,
+    dospecifyaerosol        = .true.,
+
     !dospecifyaerosol        = .true.,
     !doprogaerosol           = .true.,
 

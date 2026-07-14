@@ -33,14 +33,13 @@ module chemistry
                                MW_air, avgd, rho_aerosol, sigma_accum, soil_wetness, tropopause_index, minimum_tropopause_height, &
                                canopy_index
 
-
    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
    !! SUBCOMPONENTS OF CHEMISTRY !!
    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
    use het_chem, only: het_chem_driver, het_chem_initialize, het_chem_finalize
    use chem_aqueous, only: aq_species_names, naqchem_fields, flag_aqchemvar_out3D, flag_aqchemgasvar_out3D, aq_gasprod_species_names
    use chem_aerosol, only: ar_species_names, narchem_fields, flag_archemvar_out3D
-   use emissions, only: surface_emission_flux_driver, lightning_decaria_ic, lightning_decaria_ctg, emissions_init, emissions_finalize
+  use emissions, only: surface_emission_flux_driver, lightning_decaria_ic, lightning_decaria_ctg, emissions_init, emissions_finalize
    use deposition, only: dry_deposition_driver
    use wet_deposition, only: wet_deposition_driver
 
@@ -197,9 +196,9 @@ CONTAINS
          isallocatedCHEM = .true.            ! Done allocating chemistry
       end if
 
-      ! if (dochem .and. (do_iepox_aero_chem .or. do_iepox_droplet_chem)) then
-      call het_chem_initialize(hi_org, pHdrop, pHaero)
-      ! end if
+      if (dochem .and. (do_iepox_aero_chem .or. do_iepox_droplet_chem)) then
+         call het_chem_initialize(hi_org, pHdrop, pHaero)
+      end if
 
    end subroutine chem_setparm
 
@@ -334,7 +333,7 @@ CONTAINS
 
       integer :: i, j, k, n, ispecies                       ! Indices, n is for KPP and ispecies for heterogeneous chem.
       real :: OH_conc                                       ! OH gas concentration [molecules/cm3], only for fixed OH runs
-      real :: shortwave_radiation_threshold = 1500.       ! Downward shortwave radiation to normalize SUN by, [W m-2]
+      real :: shortwave_radiation_threshold = 1300.       ! Downward shortwave radiation to normalize SUN by, [W m-2]
       integer :: tropopause_buffer = 5                   ! Buffer zone (in indices) to do chemistry above tropopause
 
       ! For KPP integration
@@ -412,11 +411,29 @@ CONTAINS
                   end if
                end if
 
+               do n = 1, nvar
+                  if (.not. ieee_is_finite(gchem_field(i,j,k,n))) then
+                     print *, "BAD CHEM BEFORE KPP"
+                     print *, "i,j,k,n =", i,j,k,n
+                     print *, "value =", gchem_field(i,j,k,n)
+                     stop
+                  endif
+
+                  if (gchem_field(i,j,k,n) < 0.0) then
+                     print *, "NEGATIVE CHEM BEFORE KPP"
+                     print *, i,j,k,n,gchem_field(i,j,k,n)
+                     stop
+                  endif
+               enddo
+
                call Fun(var_profile(k, 1:NVAR), fixed_profile(k, 1:NFIX), rate_const(k, 1:NREACT), gas_column_tend_profile(k, 1:NVAR))     ! Calculate derivatives
                CALL Integrate(0.0, dtn, ICNTRL, RCNTRL, ISTATUS, RSTATE, IERR)       ! Use RCONST and Func to integrate the concentrations a timestep
 
                IF (IERR < 0) THEN
                   write (*, *) 'KPP failed! Indices are: ', i, j, k, IERR
+                     do n=1,NVAR
+                        print *, n, gchem_field(i,j,k,n)
+                     enddo
                   STOP
                END IF
 
@@ -474,7 +491,8 @@ CONTAINS
       archem_horiz_mean_tend = archem_horiz_mean_tend/(nx*ny)
       g_depos_horiz_mean_tend_ISOPOOH = g_depos_horiz_mean_tend_ISOPOOH/(nx*ny)
       g_depos_horiz_mean_tend_IEPOX = g_depos_horiz_mean_tend_IEPOX/(nx*ny)
-      ! print*, "After chem_proc =", SUM(gchem_field(:, :, canopy_index, ind_ISOP))      
+
+      ! print*, "After chem_proc =", SUM(gchem_field(:, :, canopy_index, ind_ISOP))
       call t_stopf('chem_proc')     ! End timing
    end subroutine chem_proc
 
@@ -515,40 +533,40 @@ CONTAINS
       end if
 
       if (do_iepox_droplet_chem) then
-         do n = 1, naqchem_fields
-            name = trim(aq_species_names(n))
-            longname = trim(aq_species_names(n))
-            units = 'kg/kg'
-            call add_to_namelist(count, chemcount, name, longname, units, 0)
+      do n = 1, naqchem_fields
+         name = trim(aq_species_names(n))
+         longname = trim(aq_species_names(n))
+         units = 'kg/kg'
+         call add_to_namelist(count, chemcount, name, longname, units, 0)
 
-            longname = trim(aq_species_names(n))//' tendency due to aqueous reaction'
-            units = 'kg/kg/s'
-            call add_to_namelist(count, chemcount, trim(aq_species_names(n))//'+', longname, units, 0)
-         end do
+         longname = trim(aq_species_names(n))//' tendency due to aqueous reaction'
+         units = 'kg/kg/s'
+         call add_to_namelist(count, chemcount, trim(aq_species_names(n))//'+', longname, units, 0)
+      end do
 
-         do n = 1, naqchem_fields
-            name = trim(aq_gasprod_species_names(n))
-            longname = trim(aq_gasprod_species_names(n))
-            units = 'ppbv'
-            call add_to_namelist(count, chemcount, name, longname, units, 0)
+      do n = 1, naqchem_fields
+         name = trim(aq_gasprod_species_names(n))
+         longname = trim(aq_gasprod_species_names(n))
+         units = 'ppbv'
+         call add_to_namelist(count, chemcount, name, longname, units, 0)
 
-            longname = trim(aq_gasprod_species_names(n))//'gas tendency due to aqueous reaction'
-            units = 'ppbv/s'
-            call add_to_namelist(count, chemcount, trim(aq_gasprod_species_names(n))//'+', longname, units, 0)
-         end do
+         longname = trim(aq_gasprod_species_names(n))//'gas tendency due to aqueous reaction'
+         units = 'ppbv/s'
+         call add_to_namelist(count, chemcount, trim(aq_gasprod_species_names(n))//'+', longname, units, 0)
+      end do
       end if
 
       if (do_iepox_aero_chem) then
-         do n = 1, narchem_fields
-            name = trim(ar_species_names(n))
-            longname = trim(ar_species_names(n))
-            units = 'kg/kg'
-            call add_to_namelist(count, chemcount, name, longname, units, 0)
+      do n = 1, narchem_fields
+         name = trim(ar_species_names(n))
+         longname = trim(ar_species_names(n))
+         units = 'kg/kg'
+         call add_to_namelist(count, chemcount, name, longname, units, 0)
 
-            longname = trim(ar_species_names(n))//' tendency due to aerosol chemistry'
-            units = 'kg/kg/s'
-            call add_to_namelist(count, chemcount, trim(ar_species_names(n))//'+', longname, units, 0)
-         end do
+         longname = trim(ar_species_names(n))//' tendency due to aerosol chemistry'
+         units = 'kg/kg/s'
+         call add_to_namelist(count, chemcount, trim(ar_species_names(n))//'+', longname, units, 0)
+      end do
       end if
 
       name = 'IPOOHd+'
@@ -622,9 +640,9 @@ CONTAINS
       soil_NO_emission_flux(:) = 0.
       isop_emission_flux(:) = 0.
 
-      if ( do_megan_isoprene .or. do_bdsnp_no .or. do_surface_Isoprene_diurnal ) then 
+      if (do_megan_isoprene .or. do_bdsnp_no .or. do_surface_Isoprene_diurnal) then
          call surface_emission_flux_driver(gchem_field, fluxbch, canopy_index, M_profile, isop_emission_flux, soil_NO_emission_flux)
-      endif
+      end if
 
       if (do_CTG_lightning) then
          call lightning_decaria_ctg(gchem_field)
@@ -677,24 +695,24 @@ CONTAINS
       end if
 
       if (do_iepox_droplet_chem) then
-         do n = 1, naqchem_fields
-            ! compute horizontal mean of all aq chem fields
-            do k = 1, nzm
-               tr0(k) = SUM(aqchem_field(1:nx, 1:ny, k, n))
-            end do
-
-            call hbuf_put(trim(aq_species_names(n)), tr0, factor_xy) ! factor is 1/(nx * ny)
-            call hbuf_put(trim(aq_species_names(n))//'+', aqchem_horiz_mean_tend(:, n), 1.)
+      do n = 1, naqchem_fields
+         ! compute horizontal mean of all aq chem fields
+         do k = 1, nzm
+            tr0(k) = SUM(aqchem_field(1:nx, 1:ny, k, n))
          end do
 
-         do n = 1, naqchem_fields
-            do k = 1, nzm
-               tr0(k) = SUM(aqchem_gasprod_field(1:nx, 1:ny, k, n))
-            end do
+         call hbuf_put(trim(aq_species_names(n)), tr0, factor_xy) ! factor is 1/(nx * ny)
+         call hbuf_put(trim(aq_species_names(n))//'+', aqchem_horiz_mean_tend(:, n), 1.)
+      end do
 
-            call hbuf_put(trim(aq_gasprod_species_names(n)), tr0, factor_xy*gas_output_scale) ! factor is 1/(nx * ny)
-            call hbuf_put(trim(aq_gasprod_species_names(n))//'+', aqchem_gasprod_horiz_mean_tend(:, n), gas_output_scale)
+      do n = 1, naqchem_fields
+         do k = 1, nzm
+            tr0(k) = SUM(aqchem_gasprod_field(1:nx, 1:ny, k, n))
          end do
+
+         call hbuf_put(trim(aq_gasprod_species_names(n)), tr0, factor_xy*gas_output_scale) ! factor is 1/(nx * ny)
+         call hbuf_put(trim(aq_gasprod_species_names(n))//'+', aqchem_gasprod_horiz_mean_tend(:, n), gas_output_scale)
+      end do
       end if
 
       if (do_iepox_aero_chem) then
@@ -750,45 +768,45 @@ CONTAINS
          end if
       end do
 
-      if (do_iepox_droplet_chem) then
-         do f = 1, naqchem_fields
-            if (flag_aqchemvar_out3D(f)) then
-               nfields1 = nfields1 + 1
-               tmp = aqchem_field(1:nx, 1:ny, :, f)
-               name = TRIM(aq_species_names(f))
-               long_name = TRIM(aq_species_names(f))
-               units = 'kg/kg'
-               call compress3D(tmp, nx, ny, nzm, name, long_name, units, &
-                               save3Dbin, dompi, rank, nsubdomains, nfiles3D, 1)
-            end if
-         end do
+      ! if (do_iepox_droplet_chem) then
+      do f = 1, naqchem_fields
+         if (flag_aqchemvar_out3D(f)) then
+            nfields1 = nfields1 + 1
+            tmp = aqchem_field(1:nx, 1:ny, :, f)
+            name = TRIM(aq_species_names(f))
+            long_name = TRIM(aq_species_names(f))
+            units = 'kg/kg'
+            call compress3D(tmp, nx, ny, nzm, name, long_name, units, &
+                            save3Dbin, dompi, rank, nsubdomains, nfiles3D, 1)
+         end if
+      end do
 
-         do f = 1, naqchem_fields
-            if (flag_aqchemgasvar_out3D(f)) then
-               nfields1 = nfields1 + 1
-               tmp = aqchem_gasprod_field(1:nx, 1:ny, :, f) ! account for ghost cells - specify 1:nx, 1,ny
-               name = TRIM(aq_gasprod_species_names(f))
-               long_name = TRIM(aq_gasprod_species_names(f))
-               units = 'kg/kg'
-               call compress3D(tmp, nx, ny, nzm, name, long_name, units, &
-                               save3Dbin, dompi, rank, nsubdomains, nfiles3D, 1)
-            end if
-         end do
-      end if
+      do f = 1, naqchem_fields
+         if (flag_aqchemgasvar_out3D(f)) then
+            nfields1 = nfields1 + 1
+            tmp = aqchem_gasprod_field(1:nx, 1:ny, :, f) ! account for ghost cells - specify 1:nx, 1,ny
+            name = TRIM(aq_gasprod_species_names(f))
+            long_name = TRIM(aq_gasprod_species_names(f))
+            units = 'kg/kg'
+            call compress3D(tmp, nx, ny, nzm, name, long_name, units, &
+                            save3Dbin, dompi, rank, nsubdomains, nfiles3D, 1)
+         end if
+      end do
+      ! end if
 
-      if (do_iepox_aero_chem) then
-         do f = 1, narchem_fields
-            if (flag_archemvar_out3D(f)) then
-               nfields1 = nfields1 + 1
-               tmp = archem_field(1:nx, 1:ny, :, f)
-               name = TRIM(ar_species_names(f))
-               long_name = TRIM(ar_species_names(f))
-               units = 'kg/kg'
-               call compress3D(tmp, nx, ny, nzm, name, long_name, units, &
-                               save3Dbin, dompi, rank, nsubdomains, nfiles3D, 1)
-            end if
-         end do
-      end if
+      ! if (do_iepox_aero_chem) then
+      do f = 1, narchem_fields
+         if (flag_archemvar_out3D(f)) then
+            nfields1 = nfields1 + 1
+            tmp = archem_field(1:nx, 1:ny, :, f)
+            name = TRIM(ar_species_names(f))
+            long_name = TRIM(ar_species_names(f))
+            units = 'kg/kg'
+            call compress3D(tmp, nx, ny, nzm, name, long_name, units, &
+                            save3Dbin, dompi, rank, nsubdomains, nfiles3D, 1)
+         end if
+      end do
+      ! end if
 
    end subroutine chem_write_fields3D
 
