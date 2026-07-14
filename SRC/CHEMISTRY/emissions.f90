@@ -179,7 +179,7 @@ contains
         if ( do_bdsnp_no ) then
             soil_NOx_activity_factor = 0.                       ! Initialize to zero
 
-            call calculate_bdsnp_NO(soil_NOx_activity_factor)
+            call calculate_bdsnp_NO()
             fluxbch(:, :, ind_NO) = ( no_avg_flux * 1000 / no_molar_mass / M_profile(1) * avogadro_number / 100**3 ) * soil_NOx_activity_factor(:, :)
             soil_NO_emission_flux(1) = SUM(fluxbch(:, :, ind_NO))
         endif 
@@ -253,10 +253,10 @@ contains
     end function calculate_megan_BVOC_radiation
 
 
-    subroutine calculate_bdsnp_NO(soil_NOx_activity_factor)
+    subroutine calculate_bdsnp_NO()
         ! Calculates soil NOx
         ! See Hudman et al. (2012) and Wang et al. (2021) for parametrization
-        use vars, only : precsfc, tabs, interactive_soil_wetness ! precsfc (x,y), tabs (x,y,z) (JY), and interactive_soil_wetness (only used in chem_flux) (JY)
+        use vars, only : prec_xy, precinstsoil, precsfc, precinst, tabs, interactive_soil_wetness ! precsfc (x,y), tabs (x,y,z) (JY), and interactive_soil_wetness (only used in chem_flux) (JY)
 
         implicit none
 
@@ -265,8 +265,6 @@ contains
         real, parameter :: b_bdsnp = 3.3
         real :: temperature_in_celsius
         real :: rain_threshold = 1e-5
-
-        real, intent(out) :: soil_NOx_activity_factor(nx, ny)                 ! temperature activity factor, light-dependent
 
         ! For interactive soil moisture
         real :: tau_decay_in_soil_moisture = 500 ! in hours! ! 0.003 ! 0.00007          ! From MERRA2 Regressions
@@ -278,14 +276,17 @@ contains
         integer :: i, j                                                  ! Counter variables
 
         ! Loop through the horizontal axes
+
+
         do i = 1, nx
             do j = 1, ny
 
                 ! If there is precipitation, increase soil moisture
                 ! Precsfc is outputted as mm/day, but in the model it is kg m-2 s-1!
-                if ( precsfc(i, j) < 0.01 ) then        ! Check if precsfc is unreasonably high; if so, don't update!
+                if ( precinst(i, j) < 0.01 ) then        ! Check if precsfc is unreasonably high; if so, don't update!
                     ! if ( interactive_soil_wetness(i, j) <= SM_threshold ) then 
-                    interactive_soil_wetness(i, j) = interactive_soil_wetness(i, j) + ( increase_in_soil_moisture_linear * precsfc(i,j) * dt / conversion_between_hour_and_second ) - ( ( 1 / tau_decay_in_soil_moisture ) * interactive_soil_wetness(i, j) * dt / conversion_between_hour_and_second )
+                    interactive_soil_wetness(i, j) = interactive_soil_wetness(i, j) + ( increase_in_soil_moisture_linear * precinst(i,j) * dt / conversion_between_hour_and_second ) - ( ( 1 / tau_decay_in_soil_moisture ) * interactive_soil_wetness(i, j) * dt / conversion_between_hour_and_second )
+
                     ! elseif ( interactive_soil_wetness(i, j) > SM_threshold ) then
                     !     interactive_soil_wetness(i, j) = interactive_soil_wetness(i, j) + ( increase_in_soil_moisture_saturated * precsfc(i,j) * dt / conversion_between_hour_and_second ) - ( ( 1 / tau_decay_in_soil_moisture ) * interactive_soil_wetness(i, j) * dt / conversion_between_hour_and_second )
                     ! endif
@@ -344,7 +345,6 @@ contains
         integer :: vertical_index_for_isotherm                                  ! index of the CTG mean isotherm
         real :: mu
         real :: std_dev                                                         ! in meters
-        real :: x_area_of_storm                                                 ! area the storm takes up
         real :: temperature_of_closest_altitude
 
         ! Production rates
@@ -353,6 +353,11 @@ contains
 
         real, parameter :: cloud_top_height_threshold = 5000.                               ! in meters
         integer :: i, j, k                                                          ! Counter variables
+        real, parameter :: lightning_scaling = 2000.                            ! Scaling on lightning emissions (part of quotient)
+        real, parameter :: storm_extent_y_m = 20000.                            ! Spatial extent of storm in y-direction (based on Decaria)
+
+        ! Only for Price & Rind, eventually remove
+        real :: x_area_of_storm
 
         lightning_time_step = time_between_flashes / dt
 
@@ -450,17 +455,17 @@ contains
                     do j = 1, ny 
                         do k = 1, nzm
                             if ( number_of_20dbz_per_altitude(k) > 0. ) then 
-                                change_in_mixing_ratio(i,j,k) = change_in_mixing_ratio(i,j,k) / ( number_of_20dbz_per_altitude(k) * dx * 20000. * 200. ) ! eventually replace dx with dy; ADDED *2 11/19
+                                change_in_mixing_ratio(i,j,k) = change_in_mixing_ratio(i,j,k) / ( number_of_20dbz_per_altitude(k) * dx * storm_extent_y_m * lightning_scaling ) ! eventually replace dx with dy; ADDED *2 11/19
                             endif
                         enddo
                     enddo
                 enddo
 
-                print*, "*************** Maximum CTG lightning = ", MAXVAL(change_in_mixing_ratio)
-                print*, "*************** Minimum CTG lightning = ", MINVAL(change_in_mixing_ratio)
+                ! , "*************** Maximum CTG lightning = ", MAXVAL(change_in_mixing_ratio)
+                ! print*, "*************** Minimum CTG lightning = ", MINVAL(change_in_mixing_ratio)
 
-                print*, "*************** Maximum NO  = ", MAXVAL(gchem_field(:, :, :, ind_NO))
-                print*, "*************** Minimum NO  = ", MINVAL(gchem_field(:, :, :, ind_NO))
+                ! print*, "*************** Maximum NO  = ", MAXVAL(gchem_field(:, :, :, ind_NO))
+                ! print*, "*************** Minimum NO  = ", MINVAL(gchem_field(:, :, :, ind_NO))
 
                 do i = 1, nx
                     do j = 1, ny 
@@ -483,7 +488,7 @@ contains
         implicit none
 
         ! real :: radar_threshold = 1e-4                                           ! to match 20 dBZ, approximate qp mixing ratio (kg/kg) based on regression
-        real :: radar_threshold = 20
+        real, parameter :: radar_threshold = 20
 
         ! General parameters for both cloud-to-ground (CTG) and intracloud (IC) lightning
         real :: time_between_flashes = 180                                      ! 3 minutes
@@ -493,10 +498,10 @@ contains
         real :: moist_adiabatic_lapse_rate = 5e-3                               ! an estimate of the moist adiabatic lapse rate, in C / m
 
         ! Cloud-to-ground lightning
-        real :: ic_isotherm_bottom = -15                                  ! isoterm of the Gaussian mean for CTG lightning, in Celsius
+        real, parameter :: ic_isotherm_bottom = -15                                  ! isoterm of the Gaussian mean for CTG lightning, in Celsius
         integer :: vertical_index_for_isotherm_bottom                                  ! index of the CTG mean isotherm
 
-        real :: ic_isotherm_top = -45                                  ! isoterm of the Gaussian mean for CTG lightning, in Celsius
+        real, parameter :: ic_isotherm_top = -45                                  ! isoterm of the Gaussian mean for CTG lightning, in Celsius
         integer :: vertical_index_for_isotherm_top                                  ! index of the CTG mean isotherm
 
         real :: mu_bottom
@@ -510,8 +515,11 @@ contains
         ! Production rates
         real :: no_production_per_flash = 460                                   ! CTG NO production per flash, in mol/flash (460 is CTG from Price & Rind)
         real :: integral_of_vertical_function                                   ! Used to get LC from N_tot
-
+        
+        real :: ic_mixing_ratio_threshold = 0.01                                ! in g/kg
         integer :: i, j, k                                                          ! Counter variables
+        real, parameter :: lightning_scaling = 2000.
+        real, parameter :: storm_extent_y_m = 20000.                            ! Spatial extent of storm in y-direction (based on Decaria)
 
         lightning_time_step = time_between_flashes / dt
 
@@ -571,7 +579,7 @@ contains
                 do k = 1,nzm 
                     do i = 1,nx
                         do j = 1,ny
-                            if ( ( (qcl(i, j, k) + qpl(i, j, k) + qci(i, j, k) + qpi(i, j, k)) * 1000. > 0.01 ) .and. ( maxval( refl_10cm ) >= radar_threshold ) ) then
+                            if ( ( (qcl(i, j, k) + qpl(i, j, k) + qci(i, j, k) + qpi(i, j, k)) * 1000. > ic_mixing_ratio_threshold ) .and. ( maxval( refl_10cm ) >= radar_threshold ) ) then
                                 x_area_of_storm(k) = x_area_of_storm(k) + 1
                             else
                                 change_in_mixing_ratio(i,j,k) = 0.
@@ -584,7 +592,7 @@ contains
                     do j = 1, ny 
                         do k = 1, nzm
                             if ( x_area_of_storm(k) > 0. ) then 
-                            change_in_mixing_ratio(i,j,k) = change_in_mixing_ratio(i,j,k) / ( x_area_of_storm(k) * dx * 20000. * 2000. ) ! eventually replace dx with dy, ADDED *10 11/19
+                            change_in_mixing_ratio(i,j,k) = change_in_mixing_ratio(i,j,k) / ( x_area_of_storm(k) * dx * storm_extent_y_m * lightning_scaling ) ! eventually replace dx with dy, ADDED *10 11/19
                             endif
                         enddo
                     enddo
