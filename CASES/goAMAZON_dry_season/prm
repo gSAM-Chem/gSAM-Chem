@@ -1,15 +1,15 @@
 &PARAMETERS
     !! RUN CONTROLS !!
-    caseid                  = 'gSAM_larger_domain_512_256_wet_season',
+    caseid                  = 'gSAM_512_256_dry_season',
     nrestart                = 0,
-    restart_sep		    = .true.,
+    restart_sep		        = .true.,
 
     dt                      = 1.0,
-    nstop                   = 1468800,
-    date0                   = 20140302000000  ! 10 AM UTC is 6 AM Amazon Standard Time
+    nstop                   = 864000,
+    date0                   = 20140916000000  ! 10 AM UTC is 6 AM Amazon Standard Time
 
     dx                      = 66.66666,
-    dy		            = 66.66666,
+    dy		                = 66.66666,
     doconstdz               = .false.,
 
     LAND                    = .true.,
@@ -91,10 +91,11 @@
     !! CHEMICAL SWITCHES !!
     do_only_tropospheric_chemistry = .true.,
 
+
     !! PARAMETRIZED SOIL MOISTURE !!
-    soil_wetness = 0.70,
+    soil_wetness = 0.50,
     increase_in_soil_moisture_linear = 500., ! in hr-1
-    tau_decay_in_soil_moisture = 15.,
+    tau_decay_in_soil_moisture = 5,
 
     !! SURFACE EMISSION SWITCHES !! 
     do_megan_isoprene       = .true.            ! Choose either MEGAN isoprene or diurnal isoprene!

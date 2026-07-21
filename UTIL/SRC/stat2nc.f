@@ -83,7 +83,9 @@ c =========== end check =====================
 !        end do
 !        dz(nzm) = dz(nzm-1)
 
-	err = NF_CREATE(filename2, NF_CLOBBER, ncid)
+	! err = NF_CREATE(filename2, NF_CLOBBER, ncid)
+        err = NF_CREATE(filename2, IOR(NF_CLOBBER, NF_64BIT_OFFSET), ncid)
+
 
 	err = NF_REDEF(ncid)
 
@@ -2304,29 +2306,43 @@ c--------------------------------------------------------
 
         end if
 
+        print*, hbuf_length
 c--------------------------------------------------------------
         ndimids=2
         vdimids(1) = zid
         vdimids(2) = timeid
 
-        do k=1,hbuf_length
+        do k=1, hbuf_length
 
            write(6,'(a72)') deflist(k)
            call HBUF_read(2,nzm,namelist(k),1,ntime,f,m)
 
            err = NF_REDEF(ncid)
+           if (err /= 0) print *, "REDEF", trim(name), err
+
            name = namelist(k)
            l=len_trim(name)
            err = NF_DEF_VAR(ncid,name(1:l),NF_FLOAT,
      &                                  ndimids,vdimids,varid)
+           if (err /= 0) print *, "DEF_VAR", trim(name), err
+
            err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
      &                                len_trim(deflist(k)),deflist(k))
+           if (err /= 0) print *, "ATT1", trim(name), err
+
            err = NF_PUT_ATT_TEXT(ncid,varid,'units',
      &                              len_trim(unitlist(k)),unitlist(k))
+           if (err /= 0) print *, "ATT2", trim(name), err
+
            err = NF_PUT_ATT_REAL(ncid,varid,'missing_value',NF_FLOAT,
      &                              1,-9999.)
            err = NF_ENDDEF(ncid)
+           if (err /= 0) print *, "ENDDEF", trim(name), err
+           if (err /= 0) print*, NF_STRERROR(err)
+
            err = NF_PUT_VAR_REAL(ncid, varid, f)
+           if (err /= 0) print *, "PUTVAR", trim(name), err
+
            if(err.ne.0) print*,'error:',err
 
         end do
