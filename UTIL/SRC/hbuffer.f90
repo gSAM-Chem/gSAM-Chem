@@ -4,7 +4,7 @@ module hbuffer
   
   integer :: hbuf_length
   real, dimension(HBUF_MAX_LENGTH*1000) :: hbuf
-  character(len = 8)  :: name_list(HBUF_MAX_LENGTH)	
+  character(len = 16)  :: name_list(HBUF_MAX_LENGTH)	
   character(len = 80) :: deflist(HBUF_MAX_LENGTH)	
   character(len = 10) :: unitlist(HBUF_MAX_LENGTH)	
 contains 

@@ -708,7 +708,7 @@ subroutine sgs_scalars()
     end if
 
     if ( dochem ) then
-      call chem_flux()
+      ! call chem_flux()  ! JY: Moved to chemistry.f90
 
       do k = 1,ngchem_fields
           fluxbtmp = fluxbch(:,:,k)

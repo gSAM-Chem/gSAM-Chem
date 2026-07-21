@@ -31,7 +31,7 @@ module chemistry
                                do_iepox_droplet_chem, do_iepox_aero_chem, hi_org, pHdrop, pHaero, &
                                gas_init_name, gas_init_value, gas_out3D_name, flag_gchemvar_out3D, &
                                MW_air, avgd, rho_aerosol, sigma_accum, soil_wetness, tropopause_index, minimum_tropopause_height, &
-                               canopy_index
+                               canopy_index, increase_in_soil_moisture_linear, tau_decay_in_soil_moisture
 
    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
    !! SUBCOMPONENTS OF CHEMISTRY !!
@@ -126,7 +126,7 @@ CONTAINS
          do_megan_isoprene, do_surface_Isoprene_diurnal, do_bdsnp_no, &
          do_IC_lightning, do_CTG_lightning, IC_decaria, CTG_decaria_reflectivity, CTG_price_and_rind, &
          do_iepox_droplet_chem, do_iepox_aero_chem, hi_org, pHdrop, pHaero, &
-         gas_init_name, gas_init_value, gas_out3D_name, soil_wetness, canopy_index
+         gas_init_name, gas_init_value, gas_out3D_name, soil_wetness, canopy_index, increase_in_soil_moisture_linear, tau_decay_in_soil_moisture
 
       ! Read in namelist from prm file
       NAMELIST /BNCUIODSBJCB/ place_holder
@@ -447,6 +447,8 @@ CONTAINS
       call check_nan ! Check if there are any nans in gchem_field after KPP
 
       ! print*, "After chemistry: is this zero? ", SUM(gchem_field(:, :, canopy_index, ind_ISOP)) / SIZE(gchem_field(:, :, canopy_index, ind_ISOP))
+
+      call chem_flux()
 
       !!!!!!!!!!!!!!!!!!!!!!!!!
       !! II. DRY DEPOSITION !!!

@@ -2,7 +2,7 @@ module emissions
 
     use grid, only : nx, ny, nz, nzm, z, dx, dy, dz, day, time, dt, pres, nstep, dimx1_s, dimx2_s, dimy1_s, dimy2_s               ! pres is in mbar!
     use cloudchem_Parameters, only : ind_NO, ind_ISOP, NVAR
-    use chemistry_params, only : do_megan_isoprene, do_surface_Isoprene_diurnal, do_bdsnp_no, do_CTG_lightning, do_IC_lightning, CTG_decaria_reflectivity, CTG_price_and_rind, IC_decaria, tropopause_index
+    use chemistry_params, only : do_megan_isoprene, do_surface_Isoprene_diurnal, do_bdsnp_no, do_CTG_lightning, do_IC_lightning, CTG_decaria_reflectivity, CTG_price_and_rind, IC_decaria, tropopause_index, increase_in_soil_moisture_linear, tau_decay_in_soil_moisture
     use vars, only : dtn
     
     implicit none
@@ -106,9 +106,9 @@ contains
         real, intent(out) :: isop_emission_flux(:), soil_NO_emission_flux(:)  ! parameter containing the surface fluxes
 
         ! Average fluxes
-        real, parameter :: iso_avg_flux = 3.15e-10 ! From midpoint of Sarkar et al. (1 mg C m-2 hr-1)
+        real, parameter :: iso_avg_flux = 3.15e-10 * 1.75 ! From midpoint of Sarkar et al. (1 mg C m-2 hr-1)
         ! real :: conversion_between_isoprene_and_nox = 0.1765 * 0.8 * 0.15 !  0.0154454 !0.00077227 ! 0.0072    ! To scale average isoprene flux [ratio of kg m-2 s-1 to kg m-2 s-1]
-        real, parameter :: no_avg_flux = 2.001e-12
+        real, parameter :: no_avg_flux = 2.001e-12 * 1.35
 
         ! Other variables
         real, parameter :: LDF_i = 1                                                ! Set for isoprene
@@ -163,7 +163,7 @@ contains
                     end do
                 enddo
                       
-                isop_emission_flux(canopy_index) = SUM(delta_ppv)
+                isop_emission_flux(canopy_index) = SUM(delta_ppv) / dtn
             endif
 
         elseif ( do_surface_Isoprene_diurnal ) then
@@ -265,10 +265,6 @@ contains
         real, parameter :: b_bdsnp = 3.3
         real :: temperature_in_celsius
         real :: rain_threshold = 1e-5
-
-        ! For interactive soil moisture
-        real :: tau_decay_in_soil_moisture = 500 ! in hours! ! 0.003 ! 0.00007          ! From MERRA2 Regressions
-        real :: increase_in_soil_moisture_linear = 75              ! From MERRA2 Regressions
         
         ! Conversion factors in soil moisture calculations
         real :: conversion_between_hour_and_second = 3600       ! MERRA2 is on an hourly time grid versus seconds for SAM
@@ -353,7 +349,7 @@ contains
 
         real, parameter :: cloud_top_height_threshold = 5000.                               ! in meters
         integer :: i, j, k                                                          ! Counter variables
-        real, parameter :: lightning_scaling = 2000.                            ! Scaling on lightning emissions (part of quotient)
+        real, parameter :: lightning_scaling = 250.                            ! Scaling on lightning emissions (part of quotient)
         real, parameter :: storm_extent_y_m = 20000.                            ! Spatial extent of storm in y-direction (based on Decaria)
 
         ! Only for Price & Rind, eventually remove
@@ -518,7 +514,7 @@ contains
         
         real :: ic_mixing_ratio_threshold = 0.01                                ! in g/kg
         integer :: i, j, k                                                          ! Counter variables
-        real, parameter :: lightning_scaling = 2000.
+        real, parameter :: lightning_scaling = 250.
         real, parameter :: storm_extent_y_m = 20000.                            ! Spatial extent of storm in y-direction (based on Decaria)
 
         lightning_time_step = time_between_flashes / dt

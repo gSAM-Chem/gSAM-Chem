@@ -15,7 +15,11 @@ module chemistry_params
    real, public :: rho_aerosol = 1777.             ! kg/m^3 aerosol density, set for ammonium sulfate when initializing aerosol distribution
    real, public :: sigma_accum = 2.04              ! stdev of accumulation mode
 
+   ! For soil moisture-soil NOx coupling
    real :: soil_wetness = 0.
+   real :: tau_decay_in_soil_moisture = 500.
+   real :: increase_in_soil_moisture_linear = 15.
+
    logical :: do_only_tropospheric_chemistry = .true.
    real :: minimum_tropopause_height = 14000.      ! in meters
    integer :: tropopause_index(nx, ny) = nzm     ! precip. rate
