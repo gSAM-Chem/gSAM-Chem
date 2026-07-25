@@ -32,35 +32,35 @@
 
 ```
 gsam-chem/
-├── SRC/                        # Fortran source code
-│   ├── CHEMISTRY/              # Chemistry module
-│   │   ├── CLOUDCHEM/          # CloudChem KPP mechanism (.kpp, .f90)
-│   │   ├── HET_CHEM/           # Heterogeneous chemistry
-│   │   └── emissions.f90       # Surface and lightning emissions
-│   ├── SLM/                    # Simple Land Model
-│   ├── MICRO_M2005/            # Morrison two-moment microphysics
-│   ├── SGS_TKE/                # TKE-based subgrid-scale turbulence closure
-│   ├── RAD_RRTM/               # RRTM radiation
-│   └── ...                     # Other dynamical core modules
-├── CASES/
+├── SRC/                            # Fortran source code
+│   ├── CHEMISTRY/                  # Chemistry module
+│   │   ├── CLOUDCHEM/              # CloudChem KPP mechanism (.kpp, .f90)
+│   │   ├── HET_CHEM/               # Heterogeneous chemistry
+│   │   └── emissions.f90           # Surface and lightning emissions
+│   ├── SLM/                        # Simple Land Model
+│   ├── MICRO_M2005/                # Morrison two-moment microphysics
+│   ├── SGS_TKE/                    # TKE-based subgrid-scale turbulence closure
+│   ├── RAD_RRTM/                   # RRTM radiation
+│   └── ...                         # Other dynamical core modules
+├── CASES/                          # Pre-configured cases
 │   └── goAMAZON_deep_convection/   # Example case (GoAmazon IOP2)
-│       ├── CaseName            # Sets the case name used in output filenames
-│       ├── grd                 # Vertical grid
-│       ├── lsf                 # Large-scale forcing
-│       ├── prm                 # Main namelist (includes &CHEMISTRY block)
-│       ├── sfc                 # Surface conditions
-│       └── snd                 # Initial sounding
-├── SCRIPTS/                    # Post-processing and utility scripts
-├── GLOBAL_DATA/                # Shared input data (e.g., photolysis lookup tables)
-├── GRIDS/                      # Grid definition files
-├── UTIL/                       # Utility programs
-├── DOC/                        # Documentation
-├── OBJ/                        # Compiled object files (generated at build time)
-├── Build                       # Build script (csh)
-├── Makefile                    # Top-level Makefile
-├── CaseName                    # Points to the active case
-├── gSAM                        # Compiled executable (generated at build time)
-└── gsam.run                    # Job submission script template
+│       ├── CaseName                # Sets the case name used in output filenames
+│       ├── grd                     # Vertical grid
+│       ├── lsf                     # Large-scale forcing
+│       ├── prm                     # Main namelist (includes &CHEMISTRY block)
+│       ├── sfc                     # Surface conditions
+│       └── snd                     # Initial sounding
+├── SCRIPTS/                        # Post-processing and utility scripts
+├── GLOBAL_DATA/                    # Shared input data (e.g., photolysis lookup tables)
+├── GRIDS/                          # Grid definition files
+├── UTIL/                           # Utility programs
+├── DOC/                            # Documentation
+├── OBJ/                            # Compiled object files (generated at build time)
+├── Build                           # Build script (csh)
+├── Makefile                        # Top-level Makefile
+├── CaseName                        # Points to the active case
+├── gSAM                            # Compiled executable (generated at build time)
+└── gsam.run                        # Job submission script template
 ```
 
 ---
