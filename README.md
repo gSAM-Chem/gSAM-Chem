@@ -1,6 +1,6 @@
 # gSAM-Chem
 
-**gSAM-Chem** is a large eddy simulation (LES) with interactive chemistry, built on the global System for Atmospheric Modeling ([gSAM](http://rossby.msrc.sunysb.edu/~marat/SAM.html)) version 1.8. It is designed to simulate atmospheric chemistry and transport at convective scales, resolving plume-scale chemistry rather than parameterizing it.
+**gSAM-Chem** is a large eddy simulation (LES) with interactive chemistry, built on the global System for Atmospheric Modeling (gSAM) version 1.8. It is designed to simulate atmospheric chemistry and transport at convective scales, resolving plume-scale chemistry rather than parameterizing it.
 
 **Documentation and tutorials:** https://gsam-chem.github.io
 
@@ -141,13 +141,13 @@ If you use gSAM-Chem in your research, please cite:
 
 Please also cite the gSAM dynamical core:
 
-> Khairoutdinov, M. F. & Randall, D. A. (2003). Cloud resolving modeling of the ARM summer 1997 IOP: Model formulation, results, uncertainties, and sensitivities. *Journal of the Atmospheric Sciences*, 60(4), 607–625. https://doi.org/10.1175/1520-0469(2003)060<0607:CRMOTA>2.0.CO;2
+> Khairoutdinov, M. F. & Randall, D. A. (2003). Cloud resolving modeling of the ARM summer 1997 IOP: Model formulation, results, uncertainties, and sensitivities. *Journal of the Atmospheric Sciences*, 60(4), 607–625. [https://doi.org/10.1175/1520-0469(2003)060<0607:CRMOTA>2.0.CO;2](https://doi.org/10.1175/1520-0469(2003)060<0607:CRMOTA>2.0.CO;2)
 
 ---
 
 ## License
 
-The gSAM-Chem chemistry module and case files are released under the MIT License. See [LICENSE](LICENSE) for details. The gSAM dynamical core is subject to its own license terms — see the gSAM documentation.
+The gSAM-Chem chemistry module and case files are released under the MIT License. See [LICENSE](https://github.com/gSAM-Chem/gSAM-Chem/blob/main/License) for details. The gSAM dynamical core is subject to its own license terms — see the gSAM documentation.
 
 ---
 
