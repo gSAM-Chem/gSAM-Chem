@@ -10,7 +10,7 @@
 
 - Explicit deep convection at ~66 m horizontal resolution
 - Interactive gas-phase chemistry via the [Kinetic PreProcessor (KPP)](https://kpp.readthedocs.io)
-- Ships with the **CloudChem mechanism**: 44 gas-phase + 7 photolysis reactions for tropical isoprene–NO<sub>x</sub>–OH chemistry
+- Ships with the CloudChem mechanism: 44 gas-phase + 7 photolysis reactions for tropical isoprene–NO<sub>x</sub>–OH chemistry
 - Interactive surface emissions: isoprene (light- and temperature-dependent), soil NO<sub>x</sub> (precipitation-driven soil moisture), and lightning NO<sub>x</sub>
 - Heterogeneous chemistry module
 - Simple Land Model (SLM) from gSAM 1.8
