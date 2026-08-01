@@ -1,6 +1,6 @@
 # gSAM-Chem
 
-**gSAM-Chem** is a large eddy simulation (LES) with interactive chemistry, built on the global System for Atmospheric Modeling (gSAM) version 1.8. It is designed to simulate atmospheric chemistry and transport at convective scales, resolving plume-scale chemistry rather than parameterizing it.
+**gSAM-Chem** is a large eddy simulation (LES) with interactive chemistry, built on the global System for Atmospheric Modeling (gSAM) version 1.8.7. It is designed to simulate atmospheric chemistry and transport at convective scales, resolving plume-scale chemistry rather than parameterizing it.
 
 **Documentation and tutorials:** https://gsam-chem.github.io
 
@@ -8,13 +8,13 @@
 
 ## Features
 
-- Explicit deep convection at ~50 m horizontal resolution
+- Explicit deep convection at ~66 m horizontal resolution
 - Interactive gas-phase chemistry via the [Kinetic PreProcessor (KPP)](https://kpp.readthedocs.io)
 - Ships with the **CloudChem mechanism**: 44 gas-phase + 7 photolysis reactions for tropical isoprene–NO<sub>x</sub>–OH chemistry
 - Interactive surface emissions: isoprene (light- and temperature-dependent), soil NO<sub>x</sub> (precipitation-driven soil moisture), and lightning NO<sub>x</sub>
 - Heterogeneous chemistry module
 - Simple Land Model (SLM) from gSAM 1.8
-- Highly parallelized (MPI); superlinear strong-scaling through 128+ cores
+- Highly parallelized (MPI); linear strong-scaling through 128 cores
 
 ---
 
@@ -141,7 +141,7 @@ If you use gSAM-Chem in your research, please cite:
 
 Please also cite the gSAM dynamical core:
 
-> Khairoutdinov, M. F. & Randall, D. A. (2003). Cloud resolving modeling of the ARM summer 1997 IOP: Model formulation, results, uncertainties, and sensitivities. *Journal of the Atmospheric Sciences*, 60(4), 607–625. [https://doi.org/10.1175/1520-0469(2003)060<0607:CRMOTA>2.0.CO;2](https://doi.org/10.1175/1520-0469(2003)060<0607:CRMOTA>2.0.CO;2)
+> Khairoutdinov, M. F., Blossey, P. N., & Bretherton, C. S. (2022). Global System for Atmospheric Modeling: Model description and preliminary results. *Journal of Advances in Modeling Earth Systems*, 14(6), e2021MS002968. [https://doi.org/10.1029/2021MS002968](https://doi.org/10.1029/2021MS002968)
 
 ---
 
