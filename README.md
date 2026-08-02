@@ -137,11 +137,11 @@ Output files are written to the directory specified in `prm`, with filenames der
 
 If you use gSAM-Chem in your research, please cite:
 
-> Yoon, J. Y. S., Wyant, M., Blossey, P., Thornton, J. A., & Turner, A. J. (in preparation). *gSAM-Chem: Implementing chemistry into a large eddy simulation.*
+> Yoon, J.Y.S., Wyant, M., Khairoutdinov, M.F., Blossey, P.N., Thornton, J.A., & Turner, A.J. (in preparation). *gSAM-Chem: Implementing chemistry into a large eddy simulation.*
 
 Please also cite the gSAM dynamical core:
 
-> Khairoutdinov, M. F., Blossey, P. N., & Bretherton, C. S. (2022). Global System for Atmospheric Modeling: Model description and preliminary results. *Journal of Advances in Modeling Earth Systems*, 14(6), e2021MS002968. [https://doi.org/10.1029/2021MS002968](https://doi.org/10.1029/2021MS002968)
+> Khairoutdinov, M.F., Blossey, P.N., & Bretherton, C.S. (2022). Global System for Atmospheric Modeling: Model description and preliminary results. *Journal of Advances in Modeling Earth Systems*, 14(6), e2021MS002968. [https://doi.org/10.1029/2021MS002968](https://doi.org/10.1029/2021MS002968)
 
 ---
 
