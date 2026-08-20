@@ -1,13 +1,13 @@
 &PARAMETERS
     !! RUN CONTROLS !!
-    caseid                  = 'gSAM_wet_season_3D_128_128_256',
-    nrestart                = 1,
+    caseid                  = 'BORNEO_512_256_higher_ISOP_lower_O3_higher_NOx',
+    nrestart                = 0,
     restart_sep		    = .true., 
     dosaferestart 	    = .true.,
 
     dt                      = 1.0,
-    nstop                   = 1468800,
-    date0                   = 20140302000000  ! 10 AM UTC is 6 AM Amazon Standard Time
+    nstop                   = 604800,
+    date0                   = 20210106180000  ! 10 AM UTC is 6 AM Amazon Standard Time
 
     dx                      = 66.66666,
     dy		            = 66.66666,
@@ -40,8 +40,8 @@
     docloud 	            = .true.,
     doprecip 	            = .true.,
 
-    longitude0              = -59.002,
-    latitude0               = -2.144,
+    longitude0              = 111.983,
+    latitude0               = -2.300,
     docoriolis  	    = .true.,
     
     dolongwave	            = .true.,
@@ -125,7 +125,7 @@
 
     !! OUTPUT VARIABLES !!
     gas_init_name           = 'OH', 'CO', 'O3', 'HCHO'
-    gas_init_value          = 0.000204349, 100, 30, 0.25
+    gas_init_value          = 0.000204349, 100, 15, 0.25
     
     gas_out3D_name          =  'ISOP', 'IEPOX', 'PAN', 'NO', 'NO2', 'PAN', 'HCHO', 'OH', 'O3', 'ISOP1Nit', 'ISOPDiNit', 'ISOPOOH', 'NO3', 'HO2'
 

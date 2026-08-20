@@ -5,7 +5,7 @@
 
 date
 setenv LD_LIBRARY_PATH  /usr/local/lib/netcdf-ifx:${LD_LIBRARY_PATH}
-mpirun -np 256 gSAM | tee sam.log
+mpirun -np 256 gSAM | tee sam_new.log
 date
 
 # Exit normally

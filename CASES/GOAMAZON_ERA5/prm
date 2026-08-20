@@ -1,13 +1,13 @@
 &PARAMETERS
     !! RUN CONTROLS !!
-    caseid                  = 'gSAM_wet_season_3D_128_128_256',
-    nrestart                = 1,
+    caseid                  = 'ERA5_512_256',
+    nrestart                = 0,
     restart_sep		    = .true., 
     dosaferestart 	    = .true.,
 
     dt                      = 1.0,
-    nstop                   = 1468800,
-    date0                   = 20140302000000  ! 10 AM UTC is 6 AM Amazon Standard Time
+    nstop                   = 604800,
+    date0                   = 20140303000000  ! 10 AM UTC is 6 AM Amazon Standard Time
 
     dx                      = 66.66666,
     dy		            = 66.66666,
