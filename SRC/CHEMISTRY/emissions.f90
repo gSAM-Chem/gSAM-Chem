@@ -106,9 +106,9 @@ contains
         real, intent(out) :: isop_emission_flux(:), soil_NO_emission_flux(:)  ! parameter containing the surface fluxes
 
         ! Average fluxes
-        real, parameter :: iso_avg_flux = 3.15e-10 * 1.75 ! From midpoint of Sarkar et al. (1 mg C m-2 hr-1)
+        real, parameter :: iso_avg_flux = 3.15e-10 * 1.75 * 4 ! THE 4 IS ONLY FOR MC!!!! ! From midpoint of Sarkar et al. (1 mg C m-2 hr-1)
         ! real :: conversion_between_isoprene_and_nox = 0.1765 * 0.8 * 0.15 !  0.0154454 !0.00077227 ! 0.0072    ! To scale average isoprene flux [ratio of kg m-2 s-1 to kg m-2 s-1]
-        real, parameter :: no_avg_flux = 2.001e-12 * 1.35
+        real, parameter :: no_avg_flux = 2.001e-12 * 1.35 * 4 ! THE 4 IS ONLY FOR MC!!!!!
 
         ! Other variables
         real, parameter :: LDF_i = 1                                                ! Set for isoprene

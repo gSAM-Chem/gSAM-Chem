@@ -419,7 +419,7 @@ CONTAINS
                      stop
                   endif
 
-                  if (gchem_field(i,j,k,n) < 0.0) then
+                  if (gchem_field(i,j,k,n) <  -1.d-15) then
                      print *, "NEGATIVE CHEM BEFORE KPP"
                      print *, i,j,k,n,gchem_field(i,j,k,n)
                      stop
