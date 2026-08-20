@@ -1,31 +1,32 @@
 &PARAMETERS
     !! RUN CONTROLS !!
-    caseid                  = 'gSAM_512_256_dry_season',
+    caseid                  = 'ERA5_512_256',
     nrestart                = 0,
-    restart_sep		        = .true.,
+    restart_sep		    = .true., 
+    dosaferestart 	    = .true.,
 
     dt                      = 1.0,
-    nstop                   = 1468800,
-    date0                   = 20140916000000  ! 10 AM UTC is 6 AM Amazon Standard Time
+    nstop                   = 604800,
+    date0                   = 20140303000000  ! 10 AM UTC is 6 AM Amazon Standard Time
 
     dx                      = 66.66666,
-    dy		                = 66.66666,
+    dy		            = 66.66666,
     doconstdz               = .false.,
 
     LAND                    = .true.,
 
     nprint                  = 100,
-    nstat 	      	        = 300,
+    nstat 	      	    = 300,
     nstatfrq                = 30,
     doSAMconditionals       = .false.,
     dosatupdnconditionals   = .false.,
 
-    nsave2D	                = 7200,
-    nsave2Dstart	        = 0,
+    nsave2D	            = 7200,
+    nsave2Dstart	    = 0,
     nsave2Dend	            = 99997200,
     save2Dbin               = .true.,
 
-    nsave3D	                = 7200,
+    nsave3D	                = 600,
     nsave3Dstart            = 0,
     nsave3Dend	            = 999999999,
     save3Dbin               = .true.,
@@ -33,7 +34,7 @@
     !! PHYSICS CONTROLS !!
     OCEAN                   = .false.,
 
-    dosgs		            = .true.,
+    dosgs		    = .true.,
     dodamping 	            = .true.,
     doupperbound            = .true.,
     docloud 	            = .true.,
@@ -41,7 +42,7 @@
 
     longitude0              = -59.002,
     latitude0               = -2.144,
-    docoriolis  	        = .true.,
+    docoriolis  	    = .true.,
     
     dolongwave	            = .true.,
     doshortwave	            = .true.,
@@ -53,7 +54,7 @@
     rad3Dout                = .false.,
 
     dosurface 	            = .true.,
-    dolargescale 	        = .true.,
+    dolargescale 	    = .true.,
     dosfcforcing            = .true.,
 
     donudging_uv            = .false.,
@@ -91,11 +92,10 @@
     !! CHEMICAL SWITCHES !!
     do_only_tropospheric_chemistry = .true.,
 
-
     !! PARAMETRIZED SOIL MOISTURE !!
-    soil_wetness = 0.54,
-    increase_in_soil_moisture_linear = 5.
-    tau_decay_in_soil_moisture = 1500., ! in hr-1
+    soil_wetness = 0.70,
+    increase_in_soil_moisture_linear = 15.,
+    tau_decay_in_soil_moisture = 500., ! in hr-1
 
     !! SURFACE EMISSION SWITCHES !! 
     do_megan_isoprene       = .true.            ! Choose either MEGAN isoprene or diurnal isoprene!
@@ -105,7 +105,7 @@
 
     !! LIGHTNING EMISSIONS !!
     do_CTG_lightning        = .true.,
-    do_IC_lightning         = .true.,
+    do_IC_lightning         = .truee.,
 
     IC_decaria              = .true.,
     CTG_decaria_reflectivity = .true.,
@@ -127,7 +127,7 @@
     gas_init_name           = 'OH', 'CO', 'O3', 'HCHO'
     gas_init_value          = 0.000204349, 100, 30, 0.25
     
-    gas_out3D_name          =  'ISOP', 'IEPOX', 'PAN', 'NO', 'NO2', 'PAN', 'HCHO', 'OH'
+    gas_out3D_name          =  'ISOP', 'IEPOX', 'PAN', 'NO', 'NO2', 'PAN', 'HCHO', 'OH', 'O3', 'ISOP1Nit', 'ISOPDiNit', 'ISOPOOH', 'NO3', 'HO2'
 
 
 &MICRO_M2005
