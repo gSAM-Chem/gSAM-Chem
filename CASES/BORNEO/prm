@@ -1,13 +1,13 @@
 &PARAMETERS
     !! RUN CONTROLS !!
-    caseid                  = 'gSAM_wet_season_3D_128_128_256',
-    nrestart                = 1,
+    caseid                  = 'BORNEO_512_256_higher_ISOP_lower_O3_higher_NOx',
+    nrestart                = 0,
     restart_sep		    = .true., 
     dosaferestart 	    = .true.,
 
     dt                      = 1.0,
-    nstop                   = 86400! 1468800,
-    date0                   = 20140302000000  ! 10 AM UTC is 6 AM Amazon Standard Time
+    nstop                   = 604800,
+    date0                   = 20210106180000  ! 10 AM UTC is 6 AM Amazon Standard Time
 
     dx                      = 66.66666,
     dy		            = 66.66666,
@@ -40,8 +40,8 @@
     docloud 	            = .true.,
     doprecip 	            = .true.,
 
-    longitude0              = -59.002,
-    latitude0               = -2.144,
+    longitude0              = 111.983,
+    latitude0               = -2.300,
     docoriolis  	    = .true.,
     
     dolongwave	            = .true.,
@@ -125,7 +125,7 @@
 
     !! OUTPUT VARIABLES !!
     gas_init_name           = 'OH', 'CO', 'O3', 'HCHO'
-    gas_init_value          = 0.000204349, 100, 30, 0.25
+    gas_init_value          = 0.000204349, 100, 15, 0.25
     
     gas_out3D_name          =  'ISOP', 'IEPOX', 'PAN', 'NO', 'NO2', 'PAN', 'HCHO', 'OH', 'O3', 'ISOP1Nit', 'ISOPDiNit', 'ISOPOOH', 'NO3', 'HO2'
 
@@ -137,16 +137,16 @@
     dopredictNc              = .true.,
     Nc0                      = 30.,
     dospecifyaerosol        = .true.,
-    doprogaerosol	     = .true.,
 
-    aer_rm1 = 0.1,
-    aer_n1 = 80.,
-    aer_sig1 = 2.04,
-  
-    aer_rm2 = 0.015,
-    aer_n2 = 1.8,
-    aer_sig2 = 2.5,
+    !dospecifyaerosol        = .true.,
+    !doprogaerosol           = .true.,
 
+    !dogaschem               = .false.,
+    !doH2SO4uptake           = .false.,
+    !doaqchem                = .false.,
+    !dofixedH2O2             = .true.,
+    !dofixedDMS              = .true.,
+    !doDMSsurfflux           = .true.,
 
     !doprecoff               = .false.,
     !dosedoff                = .false.,
@@ -182,13 +182,16 @@
     !H2SO4init               = 5.e-14,
     !H2O2init                = 7.e-10,
 
-    ! rm_accum                = 0.1,
-    ! N_accum                 = 80.,
-    ! sigma_accum             = 1.6,
+    !rm_accum                = 0.1,
+    !N_accum                 = 80.,
+    !sigma_accum             = 1.6,
 
-    ! rm_aitken               = 0.015,
-    ! N_aitken                = 30.,
+    !rm_aitken               = 0.015,
+    !N_aitken                = 30.,
     !sigma_aitken            = 1.3,
+
+    !doreflectivity_cloudradar = .true.,
+    !freq_cloudradar = 10.,
 
 
 &UWOPTIONS

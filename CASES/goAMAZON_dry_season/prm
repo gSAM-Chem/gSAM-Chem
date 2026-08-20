@@ -5,7 +5,7 @@
     restart_sep		        = .true.,
 
     dt                      = 1.0,
-    nstop                   = 864000,
+    nstop                   = 1468800,
     date0                   = 20140916000000  ! 10 AM UTC is 6 AM Amazon Standard Time
 
     dx                      = 66.66666,
@@ -93,9 +93,9 @@
 
 
     !! PARAMETRIZED SOIL MOISTURE !!
-    soil_wetness = 0.50,
-    increase_in_soil_moisture_linear = 500., ! in hr-1
-    tau_decay_in_soil_moisture = 5,
+    soil_wetness = 0.54,
+    increase_in_soil_moisture_linear = 5.
+    tau_decay_in_soil_moisture = 1500., ! in hr-1
 
     !! SURFACE EMISSION SWITCHES !! 
     do_megan_isoprene       = .true.            ! Choose either MEGAN isoprene or diurnal isoprene!
