@@ -48,6 +48,8 @@ module chemistry_params
    logical :: do_surface_Isoprene_diurnal = .false.
    logical :: do_bdsnp_no = .true.
    integer :: canopy_index = 1
+   real :: isoprene_emission_scaling = 1.
+   real :: soil_no_emission_scaling = 1.
 
    ! Lightning Switches
    logical :: do_CTG_lightning = .false.

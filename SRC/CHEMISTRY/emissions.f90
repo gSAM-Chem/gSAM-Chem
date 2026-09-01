@@ -2,7 +2,8 @@ module emissions
 
     use grid, only : nx, ny, nz, nzm, z, dx, dy, dz, day, time, dt, pres, nstep, dimx1_s, dimx2_s, dimy1_s, dimy2_s               ! pres is in mbar!
     use cloudchem_Parameters, only : ind_NO, ind_ISOP, NVAR
-    use chemistry_params, only : do_megan_isoprene, do_surface_Isoprene_diurnal, do_bdsnp_no, do_CTG_lightning, do_IC_lightning, CTG_decaria_reflectivity, CTG_price_and_rind, IC_decaria, tropopause_index, increase_in_soil_moisture_linear, tau_decay_in_soil_moisture
+    use chemistry_params, only : do_megan_isoprene, do_surface_Isoprene_diurnal, do_bdsnp_no, do_CTG_lightning, do_IC_lightning, CTG_decaria_reflectivity, CTG_price_and_rind, IC_decaria, tropopause_index, &
+                                    increase_in_soil_moisture_linear, tau_decay_in_soil_moisture, isoprene_emission_scaling, soil_no_emission_scaling
     use vars, only : dtn
     
     implicit none
@@ -106,9 +107,9 @@ contains
         real, intent(out) :: isop_emission_flux(:), soil_NO_emission_flux(:)  ! parameter containing the surface fluxes
 
         ! Average fluxes
-        real, parameter :: iso_avg_flux = 3.15e-10 * 1.75 * 4 ! THE 4 IS ONLY FOR MC!!!! ! From midpoint of Sarkar et al. (1 mg C m-2 hr-1)
+        real, parameter :: iso_avg_flux = 5.5125e-10 ! THE 4 IS ONLY FOR MC!!!! ! From midpoint of Sarkar et al. (1 mg C m-2 hr-1)
         ! real :: conversion_between_isoprene_and_nox = 0.1765 * 0.8 * 0.15 !  0.0154454 !0.00077227 ! 0.0072    ! To scale average isoprene flux [ratio of kg m-2 s-1 to kg m-2 s-1]
-        real, parameter :: no_avg_flux = 2.001e-12 * 1.35 * 4 ! THE 4 IS ONLY FOR MC!!!!!
+        real, parameter :: no_avg_flux = 2.70135e-12 ! THE 4 IS ONLY FOR MC!!!!!
 
         ! Other variables
         real, parameter :: LDF_i = 1                                                ! Set for isoprene
@@ -144,7 +145,7 @@ contains
             temperature_activity_factor = calculate_megan_BVOC_temperature(tabs(:,:,1), LDF_i)
             
             if ( canopy_index .eq. 1 ) then
-                fluxbch(:,:,ind_ISOP) =  ( iso_avg_flux * 1000 / isop_molar_mass / M_profile(1) * avogadro_number / 100**3 ) * temperature_activity_factor * radiation_activity_factor     ! Calculate isoprene fluxes using MEGAN
+                fluxbch(:,:,ind_ISOP) =  ( iso_avg_flux * isoprene_emission_scaling * 1000 / isop_molar_mass / M_profile(1) * avogadro_number / 100**3 ) * temperature_activity_factor * radiation_activity_factor     ! Calculate isoprene fluxes using MEGAN
                 isop_emission_flux(1) = SUM(fluxbch(:,:,ind_ISOP))
 
             else 
@@ -180,7 +181,7 @@ contains
             soil_NOx_activity_factor = 0.                       ! Initialize to zero
 
             call calculate_bdsnp_NO()
-            fluxbch(:, :, ind_NO) = ( no_avg_flux * 1000 / no_molar_mass / M_profile(1) * avogadro_number / 100**3 ) * soil_NOx_activity_factor(:, :)
+            fluxbch(:, :, ind_NO) = ( no_avg_flux  * soil_no_emission_scaling * 1000 / no_molar_mass / M_profile(1) * avogadro_number / 100**3 ) * soil_NOx_activity_factor(:, :)
             soil_NO_emission_flux(1) = SUM(fluxbch(:, :, ind_NO))
         endif 
     end subroutine surface_emission_flux_driver

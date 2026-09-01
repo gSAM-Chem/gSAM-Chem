@@ -102,6 +102,8 @@
     do_surface_Isoprene_diurnal = .false.,
     do_bdsnp_no             = .true.,
     canopy_index = 2,
+    isoprene_emission_scaling = 1.,
+    soil_no_emission_scaling = 1.,
 
     !! LIGHTNING EMISSIONS !!
     do_CTG_lightning        = .true.,
