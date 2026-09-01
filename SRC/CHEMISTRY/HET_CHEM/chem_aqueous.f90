@@ -15,7 +15,7 @@ module chem_aqueous
 
    real, parameter, dimension(naqchem_fields) :: molwt = (/ &
                                                  136.15, 182.15, 216.123, 119.14, &
-                                                 79.8, 118.13, 63.01, 133.3/) ! g/mol corresponding to above species
+                                                 147.13, 118.13, 63.01, 133.3/) ! g/mol corresponding to above species
 
    logical, dimension(naqchem_fields), public :: flag_aqchemvar_out3D  ! which aqueous chem array to  output
    logical, dimension(naqchem_fields), public :: flag_aqchemgasvar_out3D  ! which aqueous chem product array to output

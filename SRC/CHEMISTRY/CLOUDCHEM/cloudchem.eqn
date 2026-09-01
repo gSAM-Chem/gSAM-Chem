@@ -50,14 +50,15 @@
 <R43> ISOP + NO3 = ISOP1Nit                                                                      : ARR_ab(2.95E-12, 450.);
 <R44> NO2 + O3 = NO3                                                                             : ARR_ab(1.40E-13, 2470.);
 
+
 // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 // %%%%% Photolysis reactions                                            %%%%%
 // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 //
-<R44> O3 + hv = 2OH										: O3_PHOT(C_M, C_H2O) * SUN;
-<R45> H2O2 + hv = 2OH										: 1.18e-6 * SUN;
-<R46> CH3OOH + hv = OH										: 9.9e-6 * SUN;
-<R47> HCHO + hv = 2HO2 + CO									: 9.8e-5 * SUN;
-<R48> NO2 + hv = NO + O3									: 1.2e-2 * SUN;
-<R49> NO3 + hv = NO2										: 2.8e-4 * SUN;
-<R48> ISOPOOH + hv = 2OH + HCHO									: 9.9e-6 * SUN;
+<J1> O3 + hv = 2OH										: O3_PHOT(C_M, C_H2O) * SUN;
+<J2> H2O2 + hv = 2OH										: 1.18e-6 * SUN;
+<J3> CH3OOH + hv = OH										: 9.9e-6 * SUN;
+<J4> HCHO + hv = 2HO2 + CO									: 9.8e-5 * SUN;
+<J5> NO2 + hv = NO + O3										: 1.2e-2 * SUN;
+<J6> NO3 + hv = NO2										: 2.8e-4 * SUN;
+<J7> ISOPOOH + hv = 2OH + HCHO									: 9.9e-6 * SUN;

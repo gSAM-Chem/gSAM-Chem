@@ -1,12 +1,12 @@
 &PARAMETERS
     !! RUN CONTROLS !!
-    caseid                  = 'BORNEO_512_256_higher_ISOP_lower_O3_higher_NOx',
+    caseid                  = 'SOIL_MOISTURE_AMPLIFIED_CANOPY_1',
     nrestart                = 0,
     restart_sep		    = .true., 
     dosaferestart 	    = .true.,
 
     dt                      = 1.0,
-    nstop                   = 604800,
+    nstop                   = 172800,
     date0                   = 20210106180000  ! 10 AM UTC is 6 AM Amazon Standard Time
 
     dx                      = 66.66666,
@@ -94,18 +94,18 @@
 
     !! PARAMETRIZED SOIL MOISTURE !!
     soil_wetness = 0.70,
-    increase_in_soil_moisture_linear = 15.,
-    tau_decay_in_soil_moisture = 500., ! in hr-1
+    increase_in_soil_moisture_linear = 25.,
+    tau_decay_in_soil_moisture = 300., ! in hr-1
 
     !! SURFACE EMISSION SWITCHES !! 
     do_megan_isoprene       = .true.            ! Choose either MEGAN isoprene or diurnal isoprene!
     do_surface_Isoprene_diurnal = .false.,
     do_bdsnp_no             = .true.,
-    canopy_index = 2,
+    canopy_index = 1,
 
     !! LIGHTNING EMISSIONS !!
     do_CTG_lightning        = .true.,
-    do_IC_lightning         = .truee.,
+    do_IC_lightning         = .true.,
 
     IC_decaria              = .true.,
     CTG_decaria_reflectivity = .true.,
